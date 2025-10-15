@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polygon Area & Perimeter Calculator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Polygon Area & Perimeter Calculator</h1>
+        </header>
+        
+        <!-- Controls for Mobile/Tablet -->
+        <div class="mobile-controls">
+            <div class="control-group">
+                <label for="mobileUnit">Unit:</label>
+                <select id="mobileUnit">
+                    <option value="cm">cm</option>
+                    <option value="m">m</option>
+                    <option value="mm">mm</option>
+                    <option value="in">in</option>
+                    <option value="ft">ft</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="mobileCursorColor">Cursor:</label>
+                <input type="color" id="mobileCursorColor" value="#ff4444">
+            </div>
+            
+            <div class="control-group">
+                <label for="mobileLineColor">Line:</label>
+                <input type="color" id="mobileLineColor" value="#3498db">
+            </div>
+            
+            <div class="control-group">
+                <label for="mobileLineWidth">Width:</label>
+                <input type="range" id="mobileLineWidth" min="1" max="10" value="3">
+            </div>
+            
+            <button id="mobileClearBtn">Clear</button>
+        </div>
+
+        <div class="main-content">
+            <!-- Control Panel - Desktop -->
+            <div class="control-panel">
+                <h2>Controls</h2>
+                
+                <div class="control-group">
+                    <label for="unit">Measurement Unit:</label>
+                    <select id="unit">
+                        <option value="cm">Centimeters (cm)</option>
+                        <option value="m">Meters (m)</option>
+                        <option value="mm">Millimeters (mm)</option>
+                        <option value="in">Inches (in)</option>
+                        <option value="ft">Feet (ft)</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="cursorColor">Cursor Color:</label>
+                    <input type="color" id="cursorColor" value="#ff4444">
+                </div>
+                
+                <div class="control-group">
+                    <label for="lineColor">Line Color:</label>
+                    <input type="color" id="lineColor" value="#3498db">
+                </div>
+                
+                <div class="control-group">
+                    <label for="lineWidth">Line Width:</label>
+                    <input type="range" id="lineWidth" min="1" max="10" value="3">
+                    <span id="lineWidthValue">3</span>
+                </div>
+                
+                <div class="control-group">
+                    <label for="fillColor">Fill Color:</label>
+                    <input type="color" id="fillColor" value="#3498db33">
+                </div>
+                
+                <div class="control-group">
+                    <label for="gridSize">Grid Size:</label>
+                    <input type="range" id="gridSize" min="10" max="100" value="50">
+                    <span id="gridSizeValue">50</span>
+                </div>
+                
+                <div class="control-group">
+                    <label for="pointSize">Point Size:</label>
+                    <input type="range" id="pointSize" min="3" max="15" value="5">
+                    <span id="pointSizeValue">5</span>
+                </div>
+                
+                <button id="clearBtn">Clear Polygon</button>
+            </div>
+            
+            <!-- Drawing Canvas -->
+            <div class="canvas-container">
+                <div class="canvas-header">
+                    <h2>Drawing Area</h2>
+                    <div class="canvas-info">
+                        <span>Drag to scroll • Click to add points</span>
+                    </div>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="polygonCanvas"></canvas>
+                    <div id="cursorCoords" class="cursor-coordinates"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Panel -->
+        <div class="results-panel">
+            <h2>Results</h2>
+            <div id="results">
+                <p>Click on the canvas to create polygon points</p>
+                <p>Close the polygon by clicking near the first point</p>
+                <p>Drag to scroll around the drawing area</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
