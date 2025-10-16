@@ -47,7 +47,7 @@ h1 {
 
 .mobile-controls-top {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr auto;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 10px;
     align-items: end;
 }
@@ -102,24 +102,6 @@ h1 {
     color: #4fa8e4;
     font-weight: 600;
     margin-left: 5px;
-}
-
-.mobile-controls button {
-    padding: 10px 15px;
-    font-size: 0.9rem;
-    margin-top: 0;
-    background-color: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    min-height: 40px;
-    white-space: nowrap;
-}
-
-.mobile-controls button:hover {
-    background-color: #c0392b;
 }
 
 .main-content {
@@ -211,26 +193,6 @@ h1 {
     font-size: 1.1rem;
 }
 
-button {
-    width: 100%;
-    padding: 18px;
-    background-color: #e74c3c;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 700;
-    font-size: 1.2rem;
-    transition: all 0.3s ease;
-    margin-top: auto;
-}
-
-button:hover {
-    background-color: #c0392b;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-}
-
 .canvas-container {
     background: #2d2d2d;
     padding: 25px;
@@ -259,26 +221,43 @@ button:hover {
     margin: 0;
 }
 
+.header-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
 .mode-controls {
     display: flex;
     gap: 10px;
 }
 
-.mode-btn {
-    width: auto !important;
+.mode-btn, .clear-btn {
     padding: 12px 20px !important;
     font-size: 1rem !important;
     background-color: #34495e !important;
     margin-top: 0 !important;
+    width: auto !important;
+    border-radius: 8px !important;
+    font-weight: 600 !important;
+    transition: all 0.3s ease !important;
 }
 
 .mode-btn.active {
     background-color: #4fa8e4 !important;
 }
 
-.mode-btn:hover {
+.clear-btn {
+    background-color: #e74c3c !important;
+}
+
+.mode-btn:hover, .clear-btn:hover {
     transform: translateY(-2px) !important;
     box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
+}
+
+.clear-btn:hover {
+    background-color: #c0392b !important;
 }
 
 .canvas-wrapper {
@@ -396,7 +375,7 @@ button:hover {
     }
     
     .mobile-controls-top {
-        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
     }
     
     .mobile-controls-bottom {
@@ -433,25 +412,24 @@ button:hover {
         font-size: 0.8rem;
     }
     
-    .mobile-controls button {
-        padding: 8px 12px;
-        font-size: 0.8rem;
-        min-height: 35px;
-    }
-    
     .canvas-header {
         flex-direction: column;
         align-items: flex-start;
     }
     
-    .mode-controls {
+    .header-controls {
         width: 100%;
-        justify-content: center;
+        justify-content: space-between;
+        margin-top: 10px;
     }
     
-    .mode-btn {
+    .mode-controls {
         flex: 1;
-        text-align: center;
+        justify-content: flex-start;
+    }
+    
+    .clear-btn {
+        flex-shrink: 0;
     }
 }
 
@@ -493,20 +471,19 @@ button:hover {
         font-size: 2rem;
     }
     
-    .canvas-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    
-    .mode-controls {
+    .header-controls {
         width: 100%;
-        justify-content: center;
+        justify-content: space-between;
         margin-top: 10px;
     }
     
-    .mode-btn {
+    .mode-controls {
         flex: 1;
-        text-align: center;
+        justify-content: flex-start;
+    }
+    
+    .clear-btn {
+        flex-shrink: 0;
     }
 }
 
@@ -518,15 +495,6 @@ button:hover {
     
     .mobile-controls-bottom {
         grid-template-columns: 1fr 1fr 1fr;
-    }
-    
-    .mobile-controls-top .control-group:nth-child(5) {
-        grid-column: span 4;
-        margin-top: 10px;
-    }
-    
-    .mobile-controls-top button {
-        width: 100%;
     }
 }
 
@@ -547,8 +515,7 @@ button:hover {
     }
     
     .mobile-controls-top .control-group:nth-child(3),
-    .mobile-controls-top .control-group:nth-child(4),
-    .mobile-controls-top .control-group:nth-child(5) {
+    .mobile-controls-top .control-group:nth-child(4) {
         grid-column: span 1;
     }
     
@@ -571,13 +538,19 @@ button:hover {
         padding: 8px 12px;
     }
     
-    .mode-controls {
+    .header-controls {
         flex-direction: column;
+        gap: 10px;
+        width: 100%;
     }
     
-    .mode-btn {
+    .mode-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .clear-btn {
         width: 100% !important;
-        margin-bottom: 5px;
     }
 }
 
@@ -610,7 +583,7 @@ button:hover {
 
 /* Touch device improvements */
 @media (hover: none) and (pointer: coarse) {
-    button, .control-group input, .control-group select {
+    .control-group input, .control-group select {
         min-height: 60px;
     }
     
@@ -623,11 +596,7 @@ button:hover {
         padding: 10px 15px;
     }
     
-    .mobile-controls button {
-        min-height: 50px;
-    }
-    
-    .mode-btn {
+    .mode-btn, .clear-btn {
         min-height: 50px;
     }
 }
