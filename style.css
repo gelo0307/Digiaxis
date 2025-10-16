@@ -41,8 +41,21 @@ h1 {
     padding: 15px;
     border-radius: 12px;
     margin-bottom: 15px;
-    gap: 10px;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.mobile-controls-top {
+    display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr auto;
+    gap: 10px;
+    align-items: end;
+}
+
+.mobile-controls-bottom {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
     align-items: end;
 }
 
@@ -84,6 +97,13 @@ h1 {
     border: 2px solid #ffffff;
 }
 
+.mobile-controls span {
+    font-size: 0.8rem;
+    color: #4fa8e4;
+    font-weight: 600;
+    margin-left: 5px;
+}
+
 .mobile-controls button {
     padding: 10px 15px;
     font-size: 0.9rem;
@@ -95,6 +115,7 @@ h1 {
     cursor: pointer;
     font-weight: 600;
     min-height: 40px;
+    white-space: nowrap;
 }
 
 .mobile-controls button:hover {
@@ -334,10 +355,65 @@ button:hover {
     font-size: 1.1rem;
 }
 
-/* Tablet and Mobile Styles */
-@media (max-width: 1024px) {
+/* Tablet Landscape Styles */
+@media (max-width: 1024px) and (orientation: landscape) {
     .mobile-controls {
-        display: grid;
+        display: flex;
+    }
+    
+    .control-panel {
+        display: none;
+    }
+    
+    .mobile-controls-top {
+        grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+    }
+    
+    .mobile-controls-bottom {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+    
+    .canvas-container {
+        flex: 1;
+        width: 100%;
+        padding: 15px;
+    }
+    
+    .main-content {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .canvas-wrapper {
+        min-height: 50vh;
+        max-height: 60vh;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    .mobile-controls label {
+        font-size: 0.8rem;
+    }
+    
+    .mobile-controls input,
+    .mobile-controls select {
+        padding: 6px;
+        font-size: 0.8rem;
+    }
+    
+    .mobile-controls button {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        min-height: 35px;
+    }
+}
+
+/* Tablet Portrait Styles */
+@media (max-width: 1024px) and (orientation: portrait) {
+    .mobile-controls {
+        display: flex;
     }
     
     .control-panel {
@@ -373,6 +449,63 @@ button:hover {
     }
 }
 
+/* Small Tablet Landscape */
+@media (max-width: 900px) and (orientation: landscape) {
+    .mobile-controls-top {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+    
+    .mobile-controls-bottom {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+    
+    .mobile-controls-top .control-group:nth-child(5) {
+        grid-column: span 4;
+        margin-top: 10px;
+    }
+    
+    .mobile-controls-top button {
+        width: 100%;
+    }
+}
+
+/* Small mobile adjustments */
+@media (max-width: 480px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .mobile-controls-top {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    
+    .mobile-controls-bottom {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    
+    .mobile-controls-top .control-group:nth-child(3),
+    .mobile-controls-top .control-group:nth-child(4),
+    .mobile-controls-top .control-group:nth-child(5) {
+        grid-column: span 1;
+    }
+    
+    .canvas-container {
+        padding: 10px;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    .cursor-coordinates {
+        font-size: 1.1rem;
+        padding: 10px 15px;
+        min-width: 100px;
+    }
+}
+
 /* Desktop Styles */
 @media (min-width: 1025px) {
     .container {
@@ -397,38 +530,6 @@ button:hover {
 @media (min-width: 1400px) {
     .canvas-wrapper {
         min-height: 800px;
-    }
-}
-
-/* Small mobile adjustments */
-@media (max-width: 480px) {
-    .container {
-        padding: 10px;
-    }
-    
-    .mobile-controls {
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-    }
-    
-    .mobile-controls .control-group:nth-child(3),
-    .mobile-controls .control-group:nth-child(4),
-    .mobile-controls .control-group:nth-child(5) {
-        grid-column: span 1;
-    }
-    
-    .canvas-container {
-        padding: 10px;
-    }
-    
-    h1 {
-        font-size: 1.8rem;
-    }
-    
-    .cursor-coordinates {
-        font-size: 1.1rem;
-        padding: 10px 15px;
-        min-width: 100px;
     }
 }
 
