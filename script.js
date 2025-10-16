@@ -86,109 +86,20 @@ document.addEventListener('DOMContentLoaded', function() {
         canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
         canvas.addEventListener('touchend', handleTouchEnd);
         
-        // Control events - Desktop
-        unitSelect.addEventListener('change', (e) => {
-            state.unit = e.target.value;
-            mobileUnitSelect.value = e.target.value;
-            updateCursorDisplay(state.currentMousePos);
-            redraw();
-        });
+        // Control events
+        setupControlEvents(unitSelect, mobileUnitSelect, (value) => { state.unit = value; });
+        setupControlEvents(cursorColorInput, mobileCursorColorInput, (value) => { state.cursorColor = value; });
+        setupControlEvents(lineColorInput, mobileLineColorInput, (value) => { state.lineColor = value; });
+        setupControlEvents(fillColorInput, mobileFillColorInput, (value) => { state.fillColor = value; });
         
-        cursorColorInput.addEventListener('input', (e) => {
-            state.cursorColor = e.target.value;
-            mobileCursorColorInput.value = e.target.value;
-            updateCursorDisplay(state.currentMousePos);
-            redraw();
-        });
-        
-        lineColorInput.addEventListener('input', (e) => {
-            state.lineColor = e.target.value;
-            mobileLineColorInput.value = e.target.value;
-            redraw();
-        });
-        
-        lineWidthInput.addEventListener('input', (e) => {
-            state.lineWidth = parseInt(e.target.value);
-            lineWidthValue.textContent = state.lineWidth;
-            mobileLineWidthInput.value = state.lineWidth;
-            mobileLineWidthValue.textContent = state.lineWidth;
-            redraw();
-        });
-        
-        fillColorInput.addEventListener('input', (e) => {
-            state.fillColor = e.target.value;
-            mobileFillColorInput.value = e.target.value;
-            redraw();
-        });
-        
-        gridSizeInput.addEventListener('input', (e) => {
-            state.gridSize = parseInt(e.target.value);
-            gridSizeValue.textContent = state.gridSize;
-            mobileGridSizeInput.value = state.gridSize;
-            mobileGridSizeValue.textContent = state.gridSize;
-            redraw();
-        });
-        
-        pointSizeInput.addEventListener('input', (e) => {
-            state.pointSize = parseInt(e.target.value);
-            pointSizeValue.textContent = state.pointSize;
-            mobilePointSizeInput.value = state.pointSize;
-            mobilePointSizeValue.textContent = state.pointSize;
-            redraw();
-        });
+        setupRangeEvents(lineWidthInput, mobileLineWidthInput, lineWidthValue, mobileLineWidthValue, 
+                        (value) => { state.lineWidth = value; });
+        setupRangeEvents(gridSizeInput, mobileGridSizeInput, gridSizeValue, mobileGridSizeValue, 
+                        (value) => { state.gridSize = value; });
+        setupRangeEvents(pointSizeInput, mobilePointSizeInput, pointSizeValue, mobilePointSizeValue, 
+                        (value) => { state.pointSize = value; });
         
         clearBtn.addEventListener('click', clearPolygon);
-        
-        // Control events - Mobile
-        mobileUnitSelect.addEventListener('change', (e) => {
-            state.unit = e.target.value;
-            unitSelect.value = e.target.value;
-            updateCursorDisplay(state.currentMousePos);
-            redraw();
-        });
-        
-        mobileCursorColorInput.addEventListener('input', (e) => {
-            state.cursorColor = e.target.value;
-            cursorColorInput.value = e.target.value;
-            updateCursorDisplay(state.currentMousePos);
-            redraw();
-        });
-        
-        mobileLineColorInput.addEventListener('input', (e) => {
-            state.lineColor = e.target.value;
-            lineColorInput.value = e.target.value;
-            redraw();
-        });
-        
-        mobileLineWidthInput.addEventListener('input', (e) => {
-            state.lineWidth = parseInt(e.target.value);
-            lineWidthInput.value = state.lineWidth;
-            lineWidthValue.textContent = state.lineWidth;
-            mobileLineWidthValue.textContent = state.lineWidth;
-            redraw();
-        });
-        
-        mobileFillColorInput.addEventListener('input', (e) => {
-            state.fillColor = e.target.value;
-            fillColorInput.value = e.target.value;
-            redraw();
-        });
-        
-        mobileGridSizeInput.addEventListener('input', (e) => {
-            state.gridSize = parseInt(e.target.value);
-            gridSizeInput.value = state.gridSize;
-            gridSizeValue.textContent = state.gridSize;
-            mobileGridSizeValue.textContent = state.gridSize;
-            redraw();
-        });
-        
-        mobilePointSizeInput.addEventListener('input', (e) => {
-            state.pointSize = parseInt(e.target.value);
-            pointSizeInput.value = state.pointSize;
-            pointSizeValue.textContent = state.pointSize;
-            mobilePointSizeValue.textContent = state.pointSize;
-            redraw();
-        });
         
         // Mode buttons
         plotModeBtn.addEventListener('click', () => setMode('plot'));
@@ -200,6 +111,42 @@ document.addEventListener('DOMContentLoaded', function() {
         // Prevent context menu on right click
         canvas.addEventListener('contextmenu', (e) => {
             e.preventDefault();
+        });
+    }
+    
+    function setupControlEvents(desktopElem, mobileElem, callback) {
+        desktopElem.addEventListener('change', (e) => {
+            callback(e.target.value);
+            mobileElem.value = e.target.value;
+            updateCursorDisplay(state.currentMousePos);
+            redraw();
+        });
+        
+        mobileElem.addEventListener('change', (e) => {
+            callback(e.target.value);
+            desktopElem.value = e.target.value;
+            updateCursorDisplay(state.currentMousePos);
+            redraw();
+        });
+    }
+    
+    function setupRangeEvents(desktopElem, mobileElem, desktopValue, mobileValue, callback) {
+        desktopElem.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            callback(value);
+            desktopValue.textContent = value;
+            mobileElem.value = value;
+            mobileValue.textContent = value;
+            redraw();
+        });
+        
+        mobileElem.addEventListener('input', (e) => {
+            const value = parseInt(e.target.value);
+            callback(value);
+            mobileValue.textContent = value;
+            desktopElem.value = value;
+            desktopValue.textContent = value;
+            redraw();
         });
     }
     
@@ -229,14 +176,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateInstructions() {
         if (state.currentMode === 'plot') {
             resultsDiv.innerHTML = `
-                <p><strong>Plot Mode Active</strong> - Click/tap to add points</p>
-                <p>Close the polygon by clicking near the first point</p>
-                <p>Switch to Pan Mode to move around the drawing area</p>
+                <div class="instruction">
+                    <p><strong>Plot Mode Active</strong> - Click/tap to add points</p>
+                    <p>Close the polygon by clicking near the first point</p>
+                    <p>Switch to Pan Mode to move around the drawing area</p>
+                </div>
             `;
         } else {
             resultsDiv.innerHTML = `
-                <p><strong>Pan Mode Active</strong> - Click and drag to move around</p>
-                <p>Switch to Plot Mode to add points and create polygons</p>
+                <div class="instruction">
+                    <p><strong>Pan Mode Active</strong> - Click and drag to move around</p>
+                    <p>Switch to Plot Mode to add points and create polygons</p>
+                </div>
             `;
         }
     }
@@ -401,21 +352,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         state.points.push(worldPoint);
         redraw();
-        
-        // Auto-close if we have at least 3 points and user clicks near start
-        if (state.points.length >= 3) {
-            const firstPoint = state.points[0];
-            const distance = Math.sqrt(
-                Math.pow(worldPoint.x - firstPoint.x, 2) + 
-                Math.pow(worldPoint.y - firstPoint.y, 2)
-            );
-            
-            if (distance < closingThreshold) {
-                state.isClosed = true;
-                redraw();
-                calculateResults();
-            }
-        }
     }
     
     function showLiveMeasurement(screenPoint, worldPoint) {
@@ -611,64 +547,160 @@ document.addEventListener('DOMContentLoaded', function() {
         drawExistingPolygon();
     }
     
+    // CALCULATION FUNCTIONS WITH DETAILED EXPLANATIONS
     function calculateResults() {
         if (!state.isClosed || state.points.length < 3) return;
         
-        // Calculate perimeter
-        let perimeter = 0;
-        let sideLengths = [];
-        
-        for (let i = 0; i < state.points.length; i++) {
-            const p1 = state.points[i];
-            const p2 = state.points[(i + 1) % state.points.length];
-            const sideLength = Math.sqrt(Math.pow(p2.x - p1.x, 2) + Math.pow(p2.y - p1.y, 2));
-            perimeter += sideLength;
-            sideLengths.push(sideLength);
-        }
+        // Calculate perimeter using distance formula
+        const perimeterResult = calculatePerimeter();
         
         // Calculate area using shoelace formula
-        let area = 0;
+        const areaResult = calculateArea();
+        
+        // Display detailed results
+        displayDetailedResults(perimeterResult, areaResult);
+    }
+    
+    function calculatePerimeter() {
+        let perimeter = 0;
+        let sideLengths = [];
+        let sideDetails = [];
+        
+        // Calculate each side length using distance formula
         for (let i = 0; i < state.points.length; i++) {
             const p1 = state.points[i];
             const p2 = state.points[(i + 1) % state.points.length];
-            area += (p1.x * p2.y - p2.x * p1.y);
+            
+            // Distance formula: √[(x₂-x₁)² + (y₂-y₁)²]
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const sideLength = Math.sqrt(dx * dx + dy * dy);
+            
+            perimeter += sideLength;
+            sideLengths.push(sideLength);
+            
+            // Store calculation details
+            sideDetails.push({
+                point1: { x: p1.x, y: p1.y },
+                point2: { x: p2.x, y: p2.y },
+                dx: dx,
+                dy: dy,
+                length: sideLength
+            });
         }
-        area = Math.abs(area) / 2;
         
-        // Convert from pixels to selected unit
+        return {
+            total: perimeter,
+            sideLengths: sideLengths,
+            details: sideDetails
+        };
+    }
+    
+    function calculateArea() {
+        let area = 0;
+        let calculationSteps = [];
+        
+        // Shoelace formula implementation
+        // Area = ½ |Σ(xᵢyᵢ₊₁ - xᵢ₊₁yᵢ)|
+        
+        let sum = 0;
+        for (let i = 0; i < state.points.length; i++) {
+            const p1 = state.points[i];
+            const p2 = state.points[(i + 1) % state.points.length];
+            
+            const term = p1.x * p2.y - p2.x * p1.y;
+            sum += term;
+            
+            calculationSteps.push({
+                point1: { x: p1.x, y: p1.y },
+                point2: { x: p2.x, y: p2.y },
+                term: term,
+                cumulativeSum: sum
+            });
+        }
+        
+        area = Math.abs(sum) / 2;
+        
+        return {
+            total: area,
+            sum: sum,
+            steps: calculationSteps
+        };
+    }
+    
+    function displayDetailedResults(perimeterResult, areaResult) {
         const conversionFactor = 0.1;
-        const unitPerimeter = (perimeter * conversionFactor).toFixed(2);
-        const unitArea = (area * conversionFactor * conversionFactor).toFixed(2);
+        const unitPerimeter = (perimeterResult.total * conversionFactor).toFixed(2);
+        const unitArea = (areaResult.total * conversionFactor * conversionFactor).toFixed(2);
         
-        // Calculate individual side lengths in selected units
-        const unitSideLengths = sideLengths.map(length => 
-            (length * conversionFactor).toFixed(2)
-        );
-        
-        // Display results
+        // Generate side lengths HTML with details
         let sideLengthsHTML = '';
-        unitSideLengths.forEach((length, index) => {
-            sideLengthsHTML += `<div>Side ${index + 1}: ${length} ${state.unit}</div>`;
+        perimeterResult.details.forEach((detail, index) => {
+            const unitLength = (detail.length * conversionFactor).toFixed(2);
+            sideLengthsHTML += `
+                <div class="calculation-step">
+                    <strong>Side ${index + 1}:</strong> ${unitLength} ${state.unit}
+                    <div class="math-formula">
+                        √[(${detail.point2.x.toFixed(1)} - ${detail.point1.x.toFixed(1)})² + (${detail.point2.y.toFixed(1)} - ${detail.point1.y.toFixed(1)})²] 
+                        = √[(${detail.dx.toFixed(1)})² + (${detail.dy.toFixed(1)})²] 
+                        = ${detail.length.toFixed(2)} px = ${unitLength} ${state.unit}
+                    </div>
+                </div>
+            `;
         });
+        
+        // Generate area calculation HTML
+        let areaCalculationHTML = '';
+        areaResult.steps.forEach((step, index) => {
+            areaCalculationHTML += `
+                <div class="calculation-step">
+                    Step ${index + 1}: (${step.point1.x.toFixed(1)} × ${step.point2.y.toFixed(1)}) - (${step.point2.x.toFixed(1)} × ${step.point1.y.toFixed(1)}) 
+                    = ${step.term.toFixed(2)}
+                </div>
+            `;
+        });
+        
+        const finalSum = areaResult.sum.toFixed(2);
+        const absoluteSum = Math.abs(areaResult.sum).toFixed(2);
         
         resultsDiv.innerHTML = `
             <div class="result-item">
                 <h3>📐 Polygon Properties</h3>
                 <div><strong>Shape Type:</strong> ${getPolygonType(state.points.length)}</div>
                 <div><strong>Number of Sides:</strong> ${state.points.length}</div>
+                <div><strong>Coordinates:</strong> 
+                    ${state.points.map((p, i) => `P${i+1}(${(p.x * conversionFactor).toFixed(1)}, ${(-p.y * conversionFactor).toFixed(1)})`).join(' → ')}
+                </div>
             </div>
             
             <div class="result-item">
-                <h3>📏 Side Lengths</h3>
-                ${sideLengthsHTML}
+                <h3>📏 Perimeter Calculation</h3>
+                <div><strong>Total Perimeter:</strong> ${unitPerimeter} ${state.unit}</div>
+                <div class="calculation-details">
+                    <h4>Distance Formula: √[(x₂-x₁)² + (y₂-y₁)²]</h4>
+                    ${sideLengthsHTML}
+                    <div class="calculation-step">
+                        <strong>Sum of all sides:</strong> ${perimeterResult.total.toFixed(2)} px = ${unitPerimeter} ${state.unit}
+                    </div>
+                </div>
             </div>
             
             <div class="result-item">
-                <h3>📊 Calculations</h3>
-                <div><strong>Perimeter:</strong> ${unitPerimeter} ${state.unit}</div>
-                <div><em>Sum of all side lengths</em></div>
-                <div style="margin-top: 10px;"><strong>Area:</strong> ${unitArea} ${state.unit}²</div>
-                <div><em>Space inside the polygon</em></div>
+                <h3>📊 Area Calculation</h3>
+                <div><strong>Total Area:</strong> ${unitArea} ${state.unit}²</div>
+                <div class="calculation-details">
+                    <h4>Shoelace Formula: ½ |Σ(xᵢyᵢ₊₁ - xᵢ₊₁yᵢ)|</h4>
+                    ${areaCalculationHTML}
+                    <div class="calculation-step">
+                        <strong>Sum of terms:</strong> Σ = ${finalSum}
+                    </div>
+                    <div class="calculation-step">
+                        <strong>Absolute value:</strong> |${finalSum}| = ${absoluteSum}
+                    </div>
+                    <div class="calculation-step">
+                        <strong>Final area:</strong> ½ × ${absoluteSum} = ${areaResult.total.toFixed(2)} px² = ${unitArea} ${state.unit}²
+                    </div>
+                </div>
             </div>
         `;
     }
