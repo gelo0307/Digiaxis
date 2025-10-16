@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const canvas = document.getElementById('polygonCanvas');
     const ctx = canvas.getContext('2d');
-    const canvasWrapper = document.querySelector('.canvas-wrapper');
     
     // Application state
     const state = {
@@ -18,10 +17,9 @@ document.addEventListener('DOMContentLoaded', function() {
         offset: { x: 0, y: 0 },
         isDragging: false,
         lastPanPoint: { x: 0, y: 0 },
-        isDrawingMode: true,
+        currentMode: 'plot', // 'plot' or 'pan'
         isTouchDevice: false,
-        touchStartTime: 0,
-        touchStartPoint: { x: 0, y: 0 }
+        currentMousePos: { x: 0, y: 0 }
     };
     
     // DOM Elements
@@ -47,8 +45,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const mobilePointSizeValue = document.getElementById('mobilePointSizeValue');
     const clearBtn = document.getElementById('clearBtn');
     const mobileClearBtn = document.getElementById('mobileClearBtn');
+    const plotModeBtn = document.getElementById('plotModeBtn');
+    const panModeBtn = document.getElementById('panModeBtn');
     const resultsDiv = document.getElementById('results');
     const cursorCoords = document.getElementById('cursorCoords');
+    const liveMeasurement = document.getElementById('liveMeasurement');
     
     // Detect touch device
     state.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -68,15 +69,15 @@ document.addEventListener('DOMContentLoaded', function() {
             y: canvas.height / 2
         };
         
+        updateCursorDisplay();
         redraw();
     }
     
     // Event Listeners
     function setupEventListeners() {
         // Mouse events
-        canvas.addEventListener('click', handleCanvasClick);
-        canvas.addEventListener('mousemove', handleMouseMove);
         canvas.addEventListener('mousedown', handleMouseDown);
+        canvas.addEventListener('mousemove', handleMouseMove);
         canvas.addEventListener('mouseup', handleMouseUp);
         canvas.addEventListener('mouseleave', handleMouseUp);
         
@@ -89,12 +90,14 @@ document.addEventListener('DOMContentLoaded', function() {
         unitSelect.addEventListener('change', (e) => {
             state.unit = e.target.value;
             mobileUnitSelect.value = e.target.value;
+            updateCursorDisplay();
             redraw();
         });
         
         cursorColorInput.addEventListener('input', (e) => {
             state.cursorColor = e.target.value;
             mobileCursorColorInput.value = e.target.value;
+            updateCursorDisplay();
         });
         
         lineColorInput.addEventListener('input', (e) => {
@@ -139,12 +142,14 @@ document.addEventListener('DOMContentLoaded', function() {
         mobileUnitSelect.addEventListener('change', (e) => {
             state.unit = e.target.value;
             unitSelect.value = e.target.value;
+            updateCursorDisplay();
             redraw();
         });
         
         mobileCursorColorInput.addEventListener('input', (e) => {
             state.cursorColor = e.target.value;
             cursorColorInput.value = e.target.value;
+            updateCursorDisplay();
         });
         
         mobileLineColorInput.addEventListener('input', (e) => {
@@ -185,6 +190,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         mobileClearBtn.addEventListener('click', clearPolygon);
         
+        // Mode buttons
+        plotModeBtn.addEventListener('click', () => setMode('plot'));
+        panModeBtn.addEventListener('click', () => setMode('pan'));
+        
         window.addEventListener('load', initCanvas);
         window.addEventListener('resize', initCanvas);
         
@@ -194,29 +203,69 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Mode management
+    function setMode(mode) {
+        state.currentMode = mode;
+        
+        // Update button states
+        plotModeBtn.classList.toggle('active', mode === 'plot');
+        panModeBtn.classList.toggle('active', mode === 'pan');
+        
+        // Update cursor
+        canvas.style.cursor = mode === 'plot' ? 'crosshair' : 'grab';
+        
+        // Update instructions
+        updateInstructions();
+        
+        redraw();
+    }
+    
+    function updateInstructions() {
+        if (state.currentMode === 'plot') {
+            resultsDiv.innerHTML = `
+                <p><strong>Plot Mode Active</strong> - Click/tap to add points</p>
+                <p>Close the polygon by clicking near the first point</p>
+                <p>Switch to Pan Mode to move around the drawing area</p>
+            `;
+        } else {
+            resultsDiv.innerHTML = `
+                <p><strong>Pan Mode Active</strong> - Click and drag to move around</p>
+                <p>Switch to Plot Mode to add points and create polygons</p>
+            `;
+        }
+    }
+    
     // Mouse event handlers
     function handleMouseDown(e) {
-        if (e.button === 2 || e.ctrlKey) { // Right click or Ctrl+click for panning
+        if (state.currentMode === 'pan') {
             state.isDragging = true;
-            state.isDrawingMode = false;
             state.lastPanPoint = { x: e.clientX, y: e.clientY };
-            canvasWrapper.classList.add('grabbing');
             canvas.style.cursor = 'grabbing';
+        } else if (state.currentMode === 'plot' && e.button === 0) {
+            // Plot mode - left click to add point
+            const screenPoint = getCanvasCoordinates(e);
+            const worldPoint = {
+                x: screenPoint.x - state.offset.x,
+                y: screenPoint.y - state.offset.y
+            };
+            handlePointAddition(worldPoint);
         }
     }
     
     function handleMouseMove(e) {
         const screenPoint = getCanvasCoordinates(e);
+        state.currentMousePos = screenPoint;
+        
         const worldPoint = {
             x: screenPoint.x - state.offset.x,
             y: screenPoint.y - state.offset.y
         };
         
-        // Update cursor coordinates
+        // Always update cursor coordinates display
         updateCursorDisplay(worldPoint);
         
-        // Handle panning
-        if (state.isDragging && !state.isDrawingMode) {
+        if (state.currentMode === 'pan' && state.isDragging) {
+            // Pan the canvas
             const dx = e.clientX - state.lastPanPoint.x;
             const dy = e.clientY - state.lastPanPoint.y;
             
@@ -225,35 +274,20 @@ document.addEventListener('DOMContentLoaded', function() {
             
             state.lastPanPoint = { x: e.clientX, y: e.clientY };
             redraw();
-            return;
-        }
-        
-        // Show live measurement if we have points but polygon isn't closed
-        if (state.points.length > 0 && !state.isClosed && state.isDrawingMode) {
+        } else if (state.currentMode === 'plot' && state.points.length > 0 && !state.isClosed) {
+            // Show live measurement
             showLiveMeasurement(screenPoint, worldPoint);
         } else {
+            // Just redraw without live measurement
             redraw();
         }
     }
     
     function handleMouseUp() {
-        state.isDragging = false;
-        state.isDrawingMode = true;
-        canvasWrapper.classList.remove('grabbing');
-        canvas.style.cursor = 'crosshair';
-    }
-    
-    function handleCanvasClick(e) {
-        // Only handle left clicks for drawing
-        if (e.button !== 0 || state.isDragging) return;
-        
-        const screenPoint = getCanvasCoordinates(e);
-        const worldPoint = {
-            x: screenPoint.x - state.offset.x,
-            y: screenPoint.y - state.offset.y
-        };
-        
-        handlePointAddition(worldPoint);
+        if (state.currentMode === 'pan') {
+            state.isDragging = false;
+            canvas.style.cursor = 'grab';
+        }
     }
     
     // Touch event handlers
@@ -261,72 +295,69 @@ document.addEventListener('DOMContentLoaded', function() {
         e.preventDefault();
         if (e.touches.length === 1) {
             const touch = e.touches[0];
-            state.touchStartPoint = getCanvasCoordinates(touch);
-            state.touchStartTime = Date.now();
             state.lastPanPoint = { x: touch.clientX, y: touch.clientY };
+            
+            if (state.currentMode === 'plot') {
+                // In plot mode, add point immediately on touch
+                const screenPoint = getCanvasCoordinates(touch);
+                const worldPoint = {
+                    x: screenPoint.x - state.offset.x,
+                    y: screenPoint.y - state.offset.y
+                };
+                handlePointAddition(worldPoint);
+            }
         }
     }
     
     function handleTouchMove(e) {
         e.preventDefault();
         
-        if (e.touches.length === 1) {
+        if (e.touches.length === 1 && state.currentMode === 'pan') {
+            // Pan the canvas in pan mode
             const touch = e.touches[0];
             const screenPoint = getCanvasCoordinates(touch);
+            state.currentMousePos = screenPoint;
+            
             const worldPoint = {
                 x: screenPoint.x - state.offset.x,
                 y: screenPoint.y - state.offset.y
             };
             
-            // Update cursor coordinates
+            // Update cursor display
             updateCursorDisplay(worldPoint);
             
-            // Check if this is a pan gesture (long press or movement)
-            const currentTime = Date.now();
-            const timeDiff = currentTime - state.touchStartTime;
-            const moveDiff = Math.abs(screenPoint.x - state.touchStartPoint.x) + 
-                            Math.abs(screenPoint.y - state.touchStartPoint.y);
+            // Pan the canvas
+            const dx = touch.clientX - state.lastPanPoint.x;
+            const dy = touch.clientY - state.lastPanPoint.y;
             
-            // If it's been held for more than 200ms or moved more than 10 pixels, treat as pan
-            if (timeDiff > 200 || moveDiff > 10) {
-                state.isDrawingMode = false;
-                canvasWrapper.classList.add('grabbing');
-                
-                // Pan the canvas
-                const dx = touch.clientX - state.lastPanPoint.x;
-                const dy = touch.clientY - state.lastPanPoint.y;
-                
-                state.offset.x += dx;
-                state.offset.y += dy;
-                
-                state.lastPanPoint = { x: touch.clientX, y: touch.clientY };
-                redraw();
+            state.offset.x += dx;
+            state.offset.y += dy;
+            
+            state.lastPanPoint = { x: touch.clientX, y: touch.clientY };
+            redraw();
+        } else if (e.touches.length === 1 && state.currentMode === 'plot') {
+            // In plot mode, just update cursor and show live measurement
+            const touch = e.touches[0];
+            const screenPoint = getCanvasCoordinates(touch);
+            state.currentMousePos = screenPoint;
+            
+            const worldPoint = {
+                x: screenPoint.x - state.offset.x,
+                y: screenPoint.y - state.offset.y
+            };
+            
+            updateCursorDisplay(worldPoint);
+            
+            if (state.points.length > 0 && !state.isClosed) {
+                showLiveMeasurement(screenPoint, worldPoint);
             } else {
-                // Show live measurement for potential point addition
-                if (state.points.length > 0 && !state.isClosed) {
-                    showLiveMeasurement(screenPoint, worldPoint);
-                }
+                redraw();
             }
         }
     }
     
     function handleTouchEnd(e) {
-        e.preventDefault();
-        canvasWrapper.classList.remove('grabbing');
-        
-        // If it was a quick tap (not a pan), add a point
-        if (e.changedTouches.length === 1 && state.isDrawingMode) {
-            const touch = e.changedTouches[0];
-            const screenPoint = getCanvasCoordinates(touch);
-            const worldPoint = {
-                x: screenPoint.x - state.offset.x,
-                y: screenPoint.y - state.offset.y
-            };
-            
-            handlePointAddition(worldPoint);
-        }
-        
-        state.isDrawingMode = true;
+        // No special handling needed for touch end
     }
     
     // Common functions
@@ -424,22 +455,17 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.stroke();
         ctx.setLineDash([]);
         
-        // Display measurement text with larger font
-        ctx.fillStyle = state.cursorColor;
-        ctx.font = `bold 18px Arial`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        
+        // Update live measurement display
         const midX = (lastScreenPoint.x + screenPoint.x) / 2;
         const midY = (lastScreenPoint.y + screenPoint.y) / 2;
         
-        // Add background for better text visibility
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-        const textWidth = ctx.measureText(`${unitDistance} ${state.unit}`).width;
-        ctx.fillRect(midX - textWidth/2 - 10, midY - 15, textWidth + 20, 30);
-        
-        ctx.fillStyle = state.cursorColor;
-        ctx.fillText(`${unitDistance} ${state.unit}`, midX, midY);
+        liveMeasurement.textContent = `${unitDistance} ${state.unit}`;
+        liveMeasurement.style.display = 'block';
+        liveMeasurement.style.left = (midX - liveMeasurement.offsetWidth / 2) + 'px';
+        liveMeasurement.style.top = (midY - 40) + 'px';
+        liveMeasurement.style.backgroundColor = 'rgba(0, 0, 0, 0.9)';
+        liveMeasurement.style.color = state.cursorColor;
+        liveMeasurement.style.borderColor = state.cursorColor;
     }
     
     function drawGrid() {
@@ -608,6 +634,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function redraw() {
+        // Hide live measurement when not actively drawing
+        liveMeasurement.style.display = 'none';
+        
         drawGrid();
         drawExistingPolygon();
     }
@@ -690,16 +719,12 @@ document.addEventListener('DOMContentLoaded', function() {
         state.points = [];
         state.isClosed = false;
         state.offset = { x: 0, y: 0 };
-        resultsDiv.innerHTML = `
-            <p>Click on the canvas to create polygon points</p>
-            <p>Close the polygon by clicking near the first point</p>
-            <p id="desktopInstructions">Right-click or Ctrl+click to pan</p>
-            <p id="mobileInstructions" style="display: ${state.isTouchDevice ? 'block' : 'none'};">Touch and hold to pan the drawing area</p>
-        `;
+        updateInstructions();
         redraw();
     }
     
     // Initialize the application
     setupEventListeners();
     initCanvas();
+    setMode('plot'); // Start in plot mode
 });
