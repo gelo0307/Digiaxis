@@ -468,6 +468,14 @@ h1 {
     border-left: 3px solid #e74c3c;
 }
 
+.computation-step {
+    background: rgba(52, 152, 219, 0.1);
+    padding: 8px;
+    border-radius: 4px;
+    margin: 5px 0;
+    border-left: 3px solid #3498db;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
     .mobile-controls {
