@@ -428,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Y-axis (vertical)
         ctx.beginPath();
         ctx.moveTo(state.origin.x, visibleTop);
-            ctx.lineTo(state.origin.x, visibleBottom);
+        ctx.lineTo(state.origin.x, visibleBottom);
         ctx.stroke();
         
         // X-axis (horizontal)
