@@ -10,6 +10,7 @@
     <div class="container">
         <header>
             <h1>DIGIAXIS</h1>
+            <p class="subtitle">Visualize and calculate polygon properties with multiple calculation methods</p>
         </header>
         
         <!-- Mobile Controls -->
@@ -80,6 +81,16 @@
                 </div>
                 
                 <div class="control-group">
+                    <label for="areaMethod">Area Calculation Method:</label>
+                    <select id="areaMethod">
+                        <option value="shoelace">Shoelace Formula (Standard)</option>
+                        <option value="triangle">Triangle Division Method</option>
+                        <option value="trapezoid">Trapezoid Rule</option>
+                        <option value="coordinates">Coordinate Method</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
                     <label for="cursorColor">Cursor Color:</label>
                     <input type="color" id="cursorColor" value="#ff4444">
                 </div>
@@ -115,10 +126,16 @@
                 <div class="calculation-info">
                     <h3>Calculation Methods</h3>
                     <div class="info-item">
-                        <strong>Perimeter:</strong> Sum of all side lengths using distance formula
+                        <strong>Perimeter:</strong> Sum of all side lengths
                     </div>
                     <div class="info-item">
-                        <strong>Area:</strong> Shoelace formula (Gauss's area formula)
+                        <strong>Area Methods:</strong>
+                        <ul>
+                            <li>Shoelace Formula</li>
+                            <li>Triangle Division</li>
+                            <li>Trapezoid Rule</li>
+                            <li>Coordinate Method</li>
+                        </ul>
                     </div>
                 </div>
             </div>
