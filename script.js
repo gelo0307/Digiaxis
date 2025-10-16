@@ -17,9 +17,10 @@ document.addEventListener('DOMContentLoaded', function() {
         offset: { x: 0, y: 0 },
         isDragging: false,
         lastPanPoint: { x: 0, y: 0 },
-        currentMode: 'plot', // 'plot' or 'pan'
+        currentMode: 'plot',
         isTouchDevice: false,
-        currentMousePos: { x: 0, y: 0 }
+        currentMousePos: { x: 0, y: 0 },
+        scale: 1.0
     };
     
     // DOM Elements
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsDiv = document.getElementById('results');
     const cursorCoords = document.getElementById('cursorCoords');
     const liveMeasurement = document.getElementById('liveMeasurement');
+    const modeIndicator = document.getElementById('modeIndicator');
     
     // Detect touch device
     state.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
@@ -58,7 +60,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const container = canvas.parentElement;
         const rect = container.getBoundingClientRect();
         
-        // Set canvas size based on container
         canvas.width = rect.width;
         canvas.height = rect.height;
         
@@ -68,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function() {
             y: canvas.height / 2
         };
         
-        updateCursorDisplay();
+        updateCursorDisplay({x: 0, y: 0});
         redraw();
     }
     
@@ -89,14 +90,15 @@ document.addEventListener('DOMContentLoaded', function() {
         unitSelect.addEventListener('change', (e) => {
             state.unit = e.target.value;
             mobileUnitSelect.value = e.target.value;
-            updateCursorDisplay();
+            updateCursorDisplay(state.currentMousePos);
             redraw();
         });
         
         cursorColorInput.addEventListener('input', (e) => {
             state.cursorColor = e.target.value;
             mobileCursorColorInput.value = e.target.value;
-            updateCursorDisplay();
+            updateCursorDisplay(state.currentMousePos);
+            redraw();
         });
         
         lineColorInput.addEventListener('input', (e) => {
@@ -141,14 +143,15 @@ document.addEventListener('DOMContentLoaded', function() {
         mobileUnitSelect.addEventListener('change', (e) => {
             state.unit = e.target.value;
             unitSelect.value = e.target.value;
-            updateCursorDisplay();
+            updateCursorDisplay(state.currentMousePos);
             redraw();
         });
         
         mobileCursorColorInput.addEventListener('input', (e) => {
             state.cursorColor = e.target.value;
             cursorColorInput.value = e.target.value;
-            updateCursorDisplay();
+            updateCursorDisplay(state.currentMousePos);
+            redraw();
         });
         
         mobileLineColorInput.addEventListener('input', (e) => {
@@ -208,8 +211,11 @@ document.addEventListener('DOMContentLoaded', function() {
         plotModeBtn.classList.toggle('active', mode === 'plot');
         panModeBtn.classList.toggle('active', mode === 'pan');
         
-        // Update cursor
+        // Update cursor and indicator
         canvas.style.cursor = mode === 'plot' ? 'crosshair' : 'grab';
+        modeIndicator.textContent = mode === 'plot' ? '📐 Plot Mode Active' : '🖐️ Pan Mode Active';
+        modeIndicator.style.borderColor = mode === 'plot' ? 
+            'rgba(79, 168, 228, 0.5)' : 'rgba(46, 204, 113, 0.5)';
         
         // Update instructions
         updateInstructions();
@@ -238,18 +244,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mouse event handlers
     function handleMouseDown(e) {
         if (state.currentMode === 'pan') {
-            // Pan mode - start dragging
             state.isDragging = true;
             state.lastPanPoint = { x: e.clientX, y: e.clientY };
             canvas.style.cursor = 'grabbing';
             e.preventDefault();
         } else if (state.currentMode === 'plot' && e.button === 0) {
-            // Plot mode - left click to add point
             const screenPoint = getCanvasCoordinates(e);
-            const worldPoint = {
-                x: screenPoint.x - state.offset.x,
-                y: screenPoint.y - state.offset.y
-            };
+            const worldPoint = screenToWorld(screenPoint);
             handlePointAddition(worldPoint);
         }
     }
@@ -258,16 +259,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const screenPoint = getCanvasCoordinates(e);
         state.currentMousePos = screenPoint;
         
-        const worldPoint = {
-            x: screenPoint.x - state.offset.x,
-            y: screenPoint.y - state.offset.y
-        };
+        const worldPoint = screenToWorld(screenPoint);
         
-        // Always update cursor coordinates display
         updateCursorDisplay(worldPoint);
         
         if (state.currentMode === 'pan' && state.isDragging) {
-            // Pan the canvas
             const dx = e.clientX - state.lastPanPoint.x;
             const dy = e.clientY - state.lastPanPoint.y;
             
@@ -277,10 +273,8 @@ document.addEventListener('DOMContentLoaded', function() {
             state.lastPanPoint = { x: e.clientX, y: e.clientY };
             redraw();
         } else if (state.currentMode === 'plot' && state.points.length > 0 && !state.isClosed) {
-            // Show live measurement
             showLiveMeasurement(screenPoint, worldPoint);
         } else {
-            // Just redraw without live measurement
             redraw();
         }
     }
@@ -300,15 +294,10 @@ document.addEventListener('DOMContentLoaded', function() {
             state.lastPanPoint = { x: touch.clientX, y: touch.clientY };
             
             if (state.currentMode === 'plot') {
-                // In plot mode, add point immediately on touch
                 const screenPoint = getCanvasCoordinates(touch);
-                const worldPoint = {
-                    x: screenPoint.x - state.offset.x,
-                    y: screenPoint.y - state.offset.y
-                };
+                const worldPoint = screenToWorld(screenPoint);
                 handlePointAddition(worldPoint);
             } else if (state.currentMode === 'pan') {
-                // In pan mode, start dragging
                 state.isDragging = true;
             }
         }
@@ -322,16 +311,11 @@ document.addEventListener('DOMContentLoaded', function() {
             const screenPoint = getCanvasCoordinates(touch);
             state.currentMousePos = screenPoint;
             
-            const worldPoint = {
-                x: screenPoint.x - state.offset.x,
-                y: screenPoint.y - state.offset.y
-            };
+            const worldPoint = screenToWorld(screenPoint);
             
-            // Update cursor display
             updateCursorDisplay(worldPoint);
             
             if (state.currentMode === 'pan' && state.isDragging) {
-                // Pan the canvas in pan mode
                 const dx = touch.clientX - state.lastPanPoint.x;
                 const dy = touch.clientY - state.lastPanPoint.y;
                 
@@ -341,7 +325,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 state.lastPanPoint = { x: touch.clientX, y: touch.clientY };
                 redraw();
             } else if (state.currentMode === 'plot' && state.points.length > 0 && !state.isClosed) {
-                // In plot mode, show live measurement
                 showLiveMeasurement(screenPoint, worldPoint);
             } else {
                 redraw();
@@ -353,7 +336,7 @@ document.addEventListener('DOMContentLoaded', function() {
         state.isDragging = false;
     }
     
-    // Common functions
+    // Coordinate conversion functions
     function getCanvasCoordinates(event) {
         const rect = canvas.getBoundingClientRect();
         let clientX, clientY;
@@ -372,19 +355,33 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
+    function screenToWorld(screenPoint) {
+        return {
+            x: (screenPoint.x - state.origin.x - state.offset.x) / state.scale,
+            y: (screenPoint.y - state.origin.y - state.offset.y) / state.scale
+        };
+    }
+    
+    function worldToScreen(worldPoint) {
+        return {
+            x: worldPoint.x * state.scale + state.origin.x + state.offset.x,
+            y: worldPoint.y * state.scale + state.origin.y + state.offset.y
+        };
+    }
+    
     function updateCursorDisplay(worldPoint) {
-        // Convert to measurement units
         const conversionFactor = 0.1;
-        const unitX = ((worldPoint.x - state.origin.x) * conversionFactor).toFixed(1);
-        const unitY = ((state.origin.y - worldPoint.y) * conversionFactor).toFixed(1);
+        const unitX = (worldPoint.x * conversionFactor).toFixed(1);
+        const unitY = (-worldPoint.y * conversionFactor).toFixed(1);
         
-        // Update cursor coordinates display
         cursorCoords.textContent = `(${unitX}, ${unitY}) ${state.unit}`;
         cursorCoords.style.backgroundColor = state.cursorColor;
     }
     
     function handlePointAddition(worldPoint) {
         if (state.isClosed) return;
+        
+        const closingThreshold = 20;
         
         // Check if clicking near the first point to close the polygon
         if (state.points.length > 2) {
@@ -394,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Math.pow(worldPoint.y - firstPoint.y, 2)
             );
             
-            if (distance < 25) {
+            if (distance < closingThreshold) {
                 state.isClosed = true;
                 redraw();
                 calculateResults();
@@ -413,7 +410,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Math.pow(worldPoint.y - firstPoint.y, 2)
             );
             
-            if (distance < 25) {
+            if (distance < closingThreshold) {
                 state.isClosed = true;
                 redraw();
                 calculateResults();
@@ -426,10 +423,7 @@ document.addEventListener('DOMContentLoaded', function() {
         drawExistingPolygon();
         
         const lastPoint = state.points[state.points.length - 1];
-        const lastScreenPoint = {
-            x: lastPoint.x + state.offset.x,
-            y: lastPoint.y + state.offset.y
-        };
+        const lastScreenPoint = worldToScreen(lastPoint);
         
         const distance = Math.sqrt(
             Math.pow(worldPoint.x - lastPoint.x, 2) + 
@@ -464,19 +458,20 @@ document.addEventListener('DOMContentLoaded', function() {
     function drawGrid() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Apply pan transformation
+        // Apply transformations
         ctx.save();
-        ctx.translate(state.offset.x, state.offset.y);
+        ctx.translate(state.origin.x + state.offset.x, state.origin.y + state.offset.y);
+        ctx.scale(state.scale, state.scale);
         
         // Draw grid
         ctx.strokeStyle = '#444444';
         ctx.lineWidth = 1;
         
-        // Calculate visible area
-        const visibleLeft = -state.offset.x;
-        const visibleTop = -state.offset.y;
-        const visibleRight = canvas.width - state.offset.x;
-        const visibleBottom = canvas.height - state.offset.y;
+        // Calculate visible area in world coordinates
+        const visibleLeft = (-state.origin.x - state.offset.x) / state.scale;
+        const visibleTop = (-state.origin.y - state.offset.y) / state.scale;
+        const visibleRight = (canvas.width - state.origin.x - state.offset.x) / state.scale;
+        const visibleBottom = (canvas.height - state.origin.y - state.offset.y) / state.scale;
         
         // Vertical lines
         for (let x = Math.floor(visibleLeft / state.gridSize) * state.gridSize; x <= visibleRight; x += state.gridSize) {
@@ -496,23 +491,23 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Draw axes
         ctx.strokeStyle = '#ecf0f1';
-        ctx.lineWidth = 3;
+        ctx.lineWidth = 2;
         
-        // Y-axis (vertical)
+        // X-axis
         ctx.beginPath();
-        ctx.moveTo(state.origin.x, visibleTop);
-        ctx.lineTo(state.origin.x, visibleBottom);
+        ctx.moveTo(visibleLeft, 0);
+        ctx.lineTo(visibleRight, 0);
         ctx.stroke();
         
-        // X-axis (horizontal)
+        // Y-axis
         ctx.beginPath();
-        ctx.moveTo(visibleLeft, state.origin.y);
-        ctx.lineTo(visibleRight, state.origin.y);
+        ctx.moveTo(0, visibleTop);
+        ctx.lineTo(0, visibleBottom);
         ctx.stroke();
         
         // Draw axis labels
         ctx.fillStyle = '#ecf0f1';
-        ctx.font = `bold 16px Arial`;
+        ctx.font = '12px Arial';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         
@@ -521,54 +516,36 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // X-axis labels
         for (let x = Math.floor(visibleLeft / labelStep) * labelStep; x <= visibleRight; x += labelStep) {
-            if (Math.abs(x - state.origin.x) > labelStep/2) {
-                const measurement = (((x - state.origin.x) * conversionFactor)).toFixed(1);
-                ctx.fillText(measurement, x, state.origin.y + 25);
+            if (Math.abs(x) > labelStep/2) {
+                const measurement = (x * conversionFactor).toFixed(1);
+                ctx.fillText(measurement, x, 15);
                 
-                // Add tick marks
+                // Tick marks
                 ctx.beginPath();
-                ctx.moveTo(x, state.origin.y);
-                ctx.lineTo(x, state.origin.y + 12);
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, 8);
                 ctx.stroke();
             }
         }
         
         // Y-axis labels
         for (let y = Math.floor(visibleTop / labelStep) * labelStep; y <= visibleBottom; y += labelStep) {
-            if (Math.abs(y - state.origin.y) > labelStep/2) {
-                const measurement = (((state.origin.y - y) * conversionFactor)).toFixed(1);
-                ctx.fillText(measurement, state.origin.x - 25, y);
+            if (Math.abs(y) > labelStep/2) {
+                const measurement = (-y * conversionFactor).toFixed(1);
+                ctx.fillText(measurement, -15, y);
                 
-                // Add tick marks
+                // Tick marks
                 ctx.beginPath();
-                ctx.moveTo(state.origin.x, y);
-                ctx.lineTo(state.origin.x - 12, y);
+                ctx.moveTo(0, y);
+                ctx.lineTo(-8, y);
                 ctx.stroke();
             }
         }
         
-        // Add axis titles
-        ctx.fillStyle = '#4fa8e4';
-        ctx.font = `bold 20px Arial`;
-        
-        // X-axis title
-        if (visibleRight > state.origin.x + 100) {
-            ctx.fillText(`X (${state.unit})`, state.origin.x + 100, state.origin.y - 25);
-        }
-        
-        // Y-axis title
-        if (visibleTop < state.origin.y - 100) {
-            ctx.save();
-            ctx.translate(state.origin.x - 40, state.origin.y - 100);
-            ctx.rotate(-Math.PI / 2);
-            ctx.fillText(`Y (${state.unit})`, 0, 0);
-            ctx.restore();
-        }
-        
-        // Add origin label
+        // Origin label
         ctx.fillStyle = state.cursorColor;
-        ctx.font = `bold 16px Arial`;
-        ctx.fillText('(0,0)', state.origin.x + 15, state.origin.y - 15);
+        ctx.font = 'bold 14px Arial';
+        ctx.fillText('(0,0)', 15, -15);
         
         ctx.restore();
     }
@@ -577,7 +554,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (state.points.length === 0) return;
         
         ctx.save();
-        ctx.translate(state.offset.x, state.offset.y);
+        ctx.translate(state.origin.x + state.offset.x, state.origin.y + state.offset.y);
+        ctx.scale(state.scale, state.scale);
         
         // Draw filled polygon if closed
         if (state.isClosed && state.points.length >= 3) {
@@ -593,7 +571,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Draw polygon lines
         ctx.strokeStyle = state.lineColor;
-        ctx.lineWidth = state.lineWidth;
+        ctx.lineWidth = state.lineWidth / state.scale;
         ctx.beginPath();
         ctx.moveTo(state.points[0].x, state.points[0].y);
         
@@ -601,17 +579,18 @@ document.addEventListener('DOMContentLoaded', function() {
             ctx.lineTo(state.points[i].x, state.points[i].y);
         }
         
-        if (state.isClosed) {
+        if (!state.isClosed && state.points.length > 1) {
+            ctx.stroke();
+        } else if (state.isClosed) {
             ctx.closePath();
+            ctx.stroke();
         }
-        
-        ctx.stroke();
         
         // Draw points
         ctx.fillStyle = state.lineColor;
         for (let point of state.points) {
             ctx.beginPath();
-            ctx.arc(point.x, point.y, state.pointSize, 0, Math.PI * 2);
+            ctx.arc(point.x, point.y, state.pointSize / state.scale, 0, Math.PI * 2);
             ctx.fill();
         }
         
@@ -619,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (state.points.length > 2 && !state.isClosed) {
             ctx.fillStyle = state.cursorColor;
             ctx.beginPath();
-            ctx.arc(state.points[0].x, state.points[0].y, state.pointSize + 3, 0, Math.PI * 2);
+            ctx.arc(state.points[0].x, state.points[0].y, (state.pointSize + 3) / state.scale, 0, Math.PI * 2);
             ctx.fill();
         }
         
@@ -627,9 +606,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function redraw() {
-        // Hide live measurement when not actively drawing
         liveMeasurement.style.display = 'none';
-        
         drawGrid();
         drawExistingPolygon();
     }
@@ -719,5 +696,5 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize the application
     setupEventListeners();
     initCanvas();
-    setMode('plot'); // Start in plot mode
+    setMode('plot');
 });
