@@ -259,9 +259,26 @@ button:hover {
     margin: 0;
 }
 
-.canvas-info {
-    color: #cccccc;
-    font-size: 1rem;
+.mode-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.mode-btn {
+    width: auto !important;
+    padding: 12px 20px !important;
+    font-size: 1rem !important;
+    background-color: #34495e !important;
+    margin-top: 0 !important;
+}
+
+.mode-btn.active {
+    background-color: #4fa8e4 !important;
+}
+
+.mode-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3) !important;
 }
 
 .canvas-wrapper {
@@ -287,7 +304,7 @@ button:hover {
     position: absolute;
     top: 15px;
     right: 15px;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.9);
     color: white;
     padding: 12px 18px;
     border-radius: 8px;
@@ -296,9 +313,27 @@ button:hover {
     pointer-events: none;
     z-index: 10;
     backdrop-filter: blur(10px);
-    border: 2px solid rgba(255, 255, 255, 0.2);
-    min-width: 120px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    min-width: 140px;
     text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.live-measurement {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: #ff4444;
+    padding: 10px 15px;
+    border-radius: 6px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    pointer-events: none;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 68, 68, 0.5);
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+    display: none;
 }
 
 .results-panel {
@@ -404,20 +439,19 @@ button:hover {
         min-height: 35px;
     }
     
-    #desktopHint {
-        display: none;
+    .canvas-header {
+        flex-direction: column;
+        align-items: flex-start;
     }
     
-    #mobileHint {
-        display: inline;
+    .mode-controls {
+        width: 100%;
+        justify-content: center;
     }
     
-    #desktopInstructions {
-        display: none;
-    }
-    
-    #mobileInstructions {
-        display: block;
+    .mode-btn {
+        flex: 1;
+        text-align: center;
     }
 }
 
@@ -459,20 +493,20 @@ button:hover {
         font-size: 2rem;
     }
     
-    #desktopHint {
-        display: none;
+    .canvas-header {
+        flex-direction: column;
+        align-items: flex-start;
     }
     
-    #mobileHint {
-        display: inline;
+    .mode-controls {
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
     }
     
-    #desktopInstructions {
-        display: none;
-    }
-    
-    #mobileInstructions {
-        display: block;
+    .mode-btn {
+        flex: 1;
+        text-align: center;
     }
 }
 
@@ -529,7 +563,21 @@ button:hover {
     .cursor-coordinates {
         font-size: 1.1rem;
         padding: 10px 15px;
-        min-width: 100px;
+        min-width: 120px;
+    }
+    
+    .live-measurement {
+        font-size: 1rem;
+        padding: 8px 12px;
+    }
+    
+    .mode-controls {
+        flex-direction: column;
+    }
+    
+    .mode-btn {
+        width: 100% !important;
+        margin-bottom: 5px;
     }
 }
 
@@ -576,6 +624,10 @@ button:hover {
     }
     
     .mobile-controls button {
+        min-height: 50px;
+    }
+    
+    .mode-btn {
         min-height: 50px;
     }
 }
