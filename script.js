@@ -32,11 +32,17 @@ document.addEventListener('DOMContentLoaded', function() {
     const lineWidthInput = document.getElementById('lineWidth');
     const mobileLineWidthInput = document.getElementById('mobileLineWidth');
     const lineWidthValue = document.getElementById('lineWidthValue');
+    const mobileLineWidthValue = document.getElementById('mobileLineWidthValue');
     const fillColorInput = document.getElementById('fillColor');
+    const mobileFillColorInput = document.getElementById('mobileFillColor');
     const gridSizeInput = document.getElementById('gridSize');
+    const mobileGridSizeInput = document.getElementById('mobileGridSize');
     const gridSizeValue = document.getElementById('gridSizeValue');
+    const mobileGridSizeValue = document.getElementById('mobileGridSizeValue');
     const pointSizeInput = document.getElementById('pointSize');
+    const mobilePointSizeInput = document.getElementById('mobilePointSize');
     const pointSizeValue = document.getElementById('pointSizeValue');
+    const mobilePointSizeValue = document.getElementById('mobilePointSizeValue');
     const clearBtn = document.getElementById('clearBtn');
     const mobileClearBtn = document.getElementById('mobileClearBtn');
     const resultsDiv = document.getElementById('results');
@@ -97,23 +103,29 @@ document.addEventListener('DOMContentLoaded', function() {
             state.lineWidth = parseInt(e.target.value);
             lineWidthValue.textContent = state.lineWidth;
             mobileLineWidthInput.value = state.lineWidth;
+            mobileLineWidthValue.textContent = state.lineWidth;
             redraw();
         });
         
         fillColorInput.addEventListener('input', (e) => {
             state.fillColor = e.target.value;
+            mobileFillColorInput.value = e.target.value;
             redraw();
         });
         
         gridSizeInput.addEventListener('input', (e) => {
             state.gridSize = parseInt(e.target.value);
             gridSizeValue.textContent = state.gridSize;
+            mobileGridSizeInput.value = state.gridSize;
+            mobileGridSizeValue.textContent = state.gridSize;
             redraw();
         });
         
         pointSizeInput.addEventListener('input', (e) => {
             state.pointSize = parseInt(e.target.value);
             pointSizeValue.textContent = state.pointSize;
+            mobilePointSizeInput.value = state.pointSize;
+            mobilePointSizeValue.textContent = state.pointSize;
             redraw();
         });
         
@@ -141,6 +153,29 @@ document.addEventListener('DOMContentLoaded', function() {
             state.lineWidth = parseInt(e.target.value);
             lineWidthInput.value = state.lineWidth;
             lineWidthValue.textContent = state.lineWidth;
+            mobileLineWidthValue.textContent = state.lineWidth;
+            redraw();
+        });
+        
+        mobileFillColorInput.addEventListener('input', (e) => {
+            state.fillColor = e.target.value;
+            fillColorInput.value = e.target.value;
+            redraw();
+        });
+        
+        mobileGridSizeInput.addEventListener('input', (e) => {
+            state.gridSize = parseInt(e.target.value);
+            gridSizeInput.value = state.gridSize;
+            gridSizeValue.textContent = state.gridSize;
+            mobileGridSizeValue.textContent = state.gridSize;
+            redraw();
+        });
+        
+        mobilePointSizeInput.addEventListener('input', (e) => {
+            state.pointSize = parseInt(e.target.value);
+            pointSizeInput.value = state.pointSize;
+            pointSizeValue.textContent = state.pointSize;
+            mobilePointSizeValue.textContent = state.pointSize;
             redraw();
         });
         
@@ -393,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Y-axis (vertical)
         ctx.beginPath();
         ctx.moveTo(state.origin.x, visibleTop);
-        ctx.lineTo(state.origin.x, visibleBottom);
+            ctx.lineTo(state.origin.x, visibleBottom);
         ctx.stroke();
         
         // X-axis (horizontal)
