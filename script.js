@@ -15,11 +15,13 @@ document.addEventListener('DOMContentLoaded', function() {
         gridSize: 50,
         pointSize: 5,
         origin: { x: 0, y: 0 },
-        scale: 1,
         offset: { x: 0, y: 0 },
         isDragging: false,
         lastPanPoint: { x: 0, y: 0 },
-        isDrawingMode: true
+        isDrawingMode: true,
+        isTouchDevice: false,
+        touchStartTime: 0,
+        touchStartPoint: { x: 0, y: 0 }
     };
     
     // DOM Elements
@@ -48,6 +50,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const resultsDiv = document.getElementById('results');
     const cursorCoords = document.getElementById('cursorCoords');
     
+    // Detect touch device
+    state.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    
     // Initialize canvas dimensions
     function initCanvas() {
         const container = canvas.parentElement;
@@ -72,7 +77,6 @@ document.addEventListener('DOMContentLoaded', function() {
         canvas.addEventListener('click', handleCanvasClick);
         canvas.addEventListener('mousemove', handleMouseMove);
         canvas.addEventListener('mousedown', handleMouseDown);
-        canvas.addEventListener('mousemove', handlePan);
         canvas.addEventListener('mouseup', handleMouseUp);
         canvas.addEventListener('mouseleave', handleMouseUp);
         
@@ -183,9 +187,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         window.addEventListener('load', initCanvas);
         window.addEventListener('resize', initCanvas);
+        
+        // Prevent context menu on right click
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
     }
     
-    // Pan functionality
+    // Mouse event handlers
     function handleMouseDown(e) {
         if (e.button === 2 || e.ctrlKey) { // Right click or Ctrl+click for panning
             state.isDragging = true;
@@ -196,17 +205,35 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    function handlePan(e) {
-        if (!state.isDragging || state.isDrawingMode) return;
+    function handleMouseMove(e) {
+        const screenPoint = getCanvasCoordinates(e);
+        const worldPoint = {
+            x: screenPoint.x - state.offset.x,
+            y: screenPoint.y - state.offset.y
+        };
         
-        const dx = e.clientX - state.lastPanPoint.x;
-        const dy = e.clientY - state.lastPanPoint.y;
+        // Update cursor coordinates
+        updateCursorDisplay(worldPoint);
         
-        state.offset.x += dx;
-        state.offset.y += dy;
+        // Handle panning
+        if (state.isDragging && !state.isDrawingMode) {
+            const dx = e.clientX - state.lastPanPoint.x;
+            const dy = e.clientY - state.lastPanPoint.y;
+            
+            state.offset.x += dx;
+            state.offset.y += dy;
+            
+            state.lastPanPoint = { x: e.clientX, y: e.clientY };
+            redraw();
+            return;
+        }
         
-        state.lastPanPoint = { x: e.clientX, y: e.clientY };
-        redraw();
+        // Show live measurement if we have points but polygon isn't closed
+        if (state.points.length > 0 && !state.isClosed && state.isDrawingMode) {
+            showLiveMeasurement(screenPoint, worldPoint);
+        } else {
+            redraw();
+        }
     }
     
     function handleMouseUp() {
@@ -216,118 +243,93 @@ document.addEventListener('DOMContentLoaded', function() {
         canvas.style.cursor = 'crosshair';
     }
     
-    // Touch handling
+    function handleCanvasClick(e) {
+        // Only handle left clicks for drawing
+        if (e.button !== 0 || state.isDragging) return;
+        
+        const screenPoint = getCanvasCoordinates(e);
+        const worldPoint = {
+            x: screenPoint.x - state.offset.x,
+            y: screenPoint.y - state.offset.y
+        };
+        
+        handlePointAddition(worldPoint);
+    }
+    
+    // Touch event handlers
     function handleTouchStart(e) {
         e.preventDefault();
         if (e.touches.length === 1) {
             const touch = e.touches[0];
+            state.touchStartPoint = getCanvasCoordinates(touch);
+            state.touchStartTime = Date.now();
             state.lastPanPoint = { x: touch.clientX, y: touch.clientY };
-            state.isDrawingMode = false;
-            canvasWrapper.classList.add('grabbing');
         }
     }
     
     function handleTouchMove(e) {
         e.preventDefault();
         
-        if (e.touches.length === 1 && !state.isDrawingMode) {
-            // Pan
+        if (e.touches.length === 1) {
             const touch = e.touches[0];
-            const dx = touch.clientX - state.lastPanPoint.x;
-            const dy = touch.clientY - state.lastPanPoint.y;
+            const screenPoint = getCanvasCoordinates(touch);
+            const worldPoint = {
+                x: screenPoint.x - state.offset.x,
+                y: screenPoint.y - state.offset.y
+            };
             
-            state.offset.x += dx;
-            state.offset.y += dy;
+            // Update cursor coordinates
+            updateCursorDisplay(worldPoint);
             
-            state.lastPanPoint = { x: touch.clientX, y: touch.clientY };
-            redraw();
+            // Check if this is a pan gesture (long press or movement)
+            const currentTime = Date.now();
+            const timeDiff = currentTime - state.touchStartTime;
+            const moveDiff = Math.abs(screenPoint.x - state.touchStartPoint.x) + 
+                            Math.abs(screenPoint.y - state.touchStartPoint.y);
+            
+            // If it's been held for more than 200ms or moved more than 10 pixels, treat as pan
+            if (timeDiff > 200 || moveDiff > 10) {
+                state.isDrawingMode = false;
+                canvasWrapper.classList.add('grabbing');
+                
+                // Pan the canvas
+                const dx = touch.clientX - state.lastPanPoint.x;
+                const dy = touch.clientY - state.lastPanPoint.y;
+                
+                state.offset.x += dx;
+                state.offset.y += dy;
+                
+                state.lastPanPoint = { x: touch.clientX, y: touch.clientY };
+                redraw();
+            } else {
+                // Show live measurement for potential point addition
+                if (state.points.length > 0 && !state.isClosed) {
+                    showLiveMeasurement(screenPoint, worldPoint);
+                }
+            }
         }
     }
     
     function handleTouchEnd(e) {
-        state.isDrawingMode = true;
+        e.preventDefault();
         canvasWrapper.classList.remove('grabbing');
         
-        // If it was a tap (not a drag), treat it as a click
-        if (e.changedTouches.length === 1) {
+        // If it was a quick tap (not a pan), add a point
+        if (e.changedTouches.length === 1 && state.isDrawingMode) {
             const touch = e.changedTouches[0];
             const screenPoint = getCanvasCoordinates(touch);
             const worldPoint = {
                 x: screenPoint.x - state.offset.x,
                 y: screenPoint.y - state.offset.y
             };
-            handleCanvasClickWithPoint(worldPoint);
-        }
-    }
-    
-    function handleCanvasClick(e) {
-        if (state.isDragging && !state.isDrawingMode) return;
-        
-        const screenPoint = getCanvasCoordinates(e);
-        const worldPoint = {
-            x: screenPoint.x - state.offset.x,
-            y: screenPoint.y - state.offset.y
-        };
-        
-        handleCanvasClickWithPoint(worldPoint);
-    }
-    
-    function handleCanvasClickWithPoint(worldPoint) {
-        if (state.isClosed) return;
-        
-        // Check if clicking near the first point to close the polygon
-        if (state.points.length > 2) {
-            const firstPoint = state.points[0];
-            const distance = Math.sqrt(Math.pow(worldPoint.x - firstPoint.x, 2) + Math.pow(worldPoint.y - firstPoint.y, 2));
             
-            if (distance < 25) {
-                state.isClosed = true;
-                redraw();
-                calculateResults();
-                return;
-            }
+            handlePointAddition(worldPoint);
         }
         
-        state.points.push(worldPoint);
-        redraw();
-        
-        // Auto-close if we have at least 3 points and user clicks near start
-        if (state.points.length >= 3) {
-            const firstPoint = state.points[0];
-            const distance = Math.sqrt(Math.pow(worldPoint.x - firstPoint.x, 2) + Math.pow(worldPoint.y - firstPoint.y, 2));
-            
-            if (distance < 25) {
-                state.isClosed = true;
-                redraw();
-                calculateResults();
-            }
-        }
+        state.isDrawingMode = true;
     }
     
-    function handleMouseMove(e) {
-        const screenPoint = getCanvasCoordinates(e);
-        const worldPoint = {
-            x: screenPoint.x - state.offset.x,
-            y: screenPoint.y - state.offset.y
-        };
-        
-        // Convert to measurement units
-        const conversionFactor = 0.1;
-        const unitX = ((worldPoint.x - state.origin.x) * conversionFactor).toFixed(1);
-        const unitY = ((state.origin.y - worldPoint.y) * conversionFactor).toFixed(1);
-        
-        // Update cursor coordinates display
-        cursorCoords.textContent = `(${unitX}, ${unitY}) ${state.unit}`;
-        cursorCoords.style.backgroundColor = state.cursorColor;
-        
-        // Show live measurement if we have at least one point but polygon isn't closed
-        if (state.points.length > 0 && !state.isClosed && state.isDrawingMode) {
-            showLiveMeasurement(screenPoint, worldPoint);
-        } else {
-            redraw();
-        }
-    }
-    
+    // Common functions
     function getCanvasCoordinates(event) {
         const rect = canvas.getBoundingClientRect();
         let clientX, clientY;
@@ -346,6 +348,55 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
+    function updateCursorDisplay(worldPoint) {
+        // Convert to measurement units
+        const conversionFactor = 0.1;
+        const unitX = ((worldPoint.x - state.origin.x) * conversionFactor).toFixed(1);
+        const unitY = ((state.origin.y - worldPoint.y) * conversionFactor).toFixed(1);
+        
+        // Update cursor coordinates display
+        cursorCoords.textContent = `(${unitX}, ${unitY}) ${state.unit}`;
+        cursorCoords.style.backgroundColor = state.cursorColor;
+    }
+    
+    function handlePointAddition(worldPoint) {
+        if (state.isClosed) return;
+        
+        // Check if clicking near the first point to close the polygon
+        if (state.points.length > 2) {
+            const firstPoint = state.points[0];
+            const distance = Math.sqrt(
+                Math.pow(worldPoint.x - firstPoint.x, 2) + 
+                Math.pow(worldPoint.y - firstPoint.y, 2)
+            );
+            
+            if (distance < 25) {
+                state.isClosed = true;
+                redraw();
+                calculateResults();
+                return;
+            }
+        }
+        
+        state.points.push(worldPoint);
+        redraw();
+        
+        // Auto-close if we have at least 3 points and user clicks near start
+        if (state.points.length >= 3) {
+            const firstPoint = state.points[0];
+            const distance = Math.sqrt(
+                Math.pow(worldPoint.x - firstPoint.x, 2) + 
+                Math.pow(worldPoint.y - firstPoint.y, 2)
+            );
+            
+            if (distance < 25) {
+                state.isClosed = true;
+                redraw();
+                calculateResults();
+            }
+        }
+    }
+    
     function showLiveMeasurement(screenPoint, worldPoint) {
         drawGrid();
         drawExistingPolygon();
@@ -356,7 +407,10 @@ document.addEventListener('DOMContentLoaded', function() {
             y: lastPoint.y + state.offset.y
         };
         
-        const distance = Math.sqrt(Math.pow(worldPoint.x - lastPoint.x, 2) + Math.pow(worldPoint.y - lastPoint.y, 2));
+        const distance = Math.sqrt(
+            Math.pow(worldPoint.x - lastPoint.x, 2) + 
+            Math.pow(worldPoint.y - lastPoint.y, 2)
+        );
         const conversionFactor = 0.1;
         const unitDistance = (distance * conversionFactor).toFixed(2);
         
@@ -639,15 +693,11 @@ document.addEventListener('DOMContentLoaded', function() {
         resultsDiv.innerHTML = `
             <p>Click on the canvas to create polygon points</p>
             <p>Close the polygon by clicking near the first point</p>
-            <p>Right-click or Ctrl+click to drag and scroll • Touch and drag on mobile</p>
+            <p id="desktopInstructions">Right-click or Ctrl+click to pan</p>
+            <p id="mobileInstructions" style="display: ${state.isTouchDevice ? 'block' : 'none'};">Touch and hold to pan the drawing area</p>
         `;
         redraw();
     }
-    
-    // Prevent context menu on right click
-    canvas.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-    });
     
     // Initialize the application
     setupEventListeners();
