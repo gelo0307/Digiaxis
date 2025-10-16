@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         points: [],
         isClosed: false,
         unit: 'cm',
+        areaMethod: 'shoelace',
         cursorColor: '#ff4444',
         lineColor: '#3498db',
         lineWidth: 3,
@@ -26,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const unitSelect = document.getElementById('unit');
     const mobileUnitSelect = document.getElementById('mobileUnit');
+    const areaMethodSelect = document.getElementById('areaMethod');
     const cursorColorInput = document.getElementById('cursorColor');
     const mobileCursorColorInput = document.getElementById('mobileCursorColor');
     const lineColorInput = document.getElementById('lineColor');
@@ -91,6 +93,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Control events
         setupControlEvents(unitSelect, mobileUnitSelect, (value) => { state.unit = value; });
+        areaMethodSelect.addEventListener('change', (e) => { 
+            state.areaMethod = e.target.value;
+            if (state.isClosed) calculateResults();
+        });
         setupControlEvents(cursorColorInput, mobileCursorColorInput, (value) => { state.cursorColor = value; });
         setupControlEvents(lineColorInput, mobileLineColorInput, (value) => { state.lineColor = value; });
         setupControlEvents(fillColorInput, mobileFillColorInput, (value) => { state.fillColor = value; });
@@ -547,26 +553,48 @@ document.addEventListener('DOMContentLoaded', function() {
         drawExistingPolygon();
     }
     
-    // CALCULATION FUNCTIONS WITH ACTUAL NUMERICAL COMPUTATIONS
+    // CALCULATION FUNCTIONS WITH MULTIPLE AREA METHODS
     function calculateResults() {
         if (!state.isClosed || state.points.length < 3) return;
         
         // Calculate perimeter using distance formula
         const perimeterResult = calculatePerimeter();
         
-        // Calculate area using shoelace formula
-        const areaResult = calculateArea();
+        // Calculate area using selected method
+        let areaResult;
+        switch (state.areaMethod) {
+            case 'shoelace':
+                areaResult = calculateAreaShoelace();
+                break;
+            case 'triangle':
+                areaResult = calculateAreaTriangleDivision();
+                break;
+            case 'trapezoid':
+                areaResult = calculateAreaTrapezoid();
+                break;
+            case 'coordinates':
+                areaResult = calculateAreaCoordinates();
+                break;
+            default:
+                areaResult = calculateAreaShoelace();
+        }
         
-        // Display detailed results with actual computations
-        displayDetailedResults(perimeterResult, areaResult);
+        // Calculate area using all methods for comparison
+        const allMethods = {
+            shoelace: calculateAreaShoelace(),
+            triangle: calculateAreaTriangleDivision(),
+            trapezoid: calculateAreaTrapezoid(),
+            coordinates: calculateAreaCoordinates()
+        };
+        
+        // Display detailed results
+        displayDetailedResults(perimeterResult, areaResult, allMethods);
     }
     
     function calculatePerimeter() {
         let perimeter = 0;
         let sideLengths = [];
         let sideDetails = [];
-        
-        console.log("=== PERIMETER CALCULATION ===");
         
         // Calculate each side length using distance formula
         for (let i = 0; i < state.points.length; i++) {
@@ -595,18 +623,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 sumSquares: sumSquares,
                 length: sideLength
             });
-            
-            console.log(`Side ${i+1}: P${i+1}(${p1.x.toFixed(1)}, ${p1.y.toFixed(1)}) to P${(i+1)%state.points.length+1}(${p2.x.toFixed(1)}, ${p2.y.toFixed(1)})`);
-            console.log(`  dx = ${p2.x.toFixed(1)} - ${p1.x.toFixed(1)} = ${dx.toFixed(1)}`);
-            console.log(`  dy = ${p2.y.toFixed(1)} - ${p1.y.toFixed(1)} = ${dy.toFixed(1)}`);
-            console.log(`  dx² = ${dx.toFixed(1)}² = ${dxSquared.toFixed(2)}`);
-            console.log(`  dy² = ${dy.toFixed(1)}² = ${dySquared.toFixed(2)}`);
-            console.log(`  dx² + dy² = ${dxSquared.toFixed(2)} + ${dySquared.toFixed(2)} = ${sumSquares.toFixed(2)}`);
-            console.log(`  length = √${sumSquares.toFixed(2)} = ${sideLength.toFixed(2)} pixels`);
-            console.log(`  length = ${sideLength.toFixed(2)} × ${PIXEL_TO_UNIT} = ${(sideLength * PIXEL_TO_UNIT).toFixed(2)} ${state.unit}`);
         }
-        
-        console.log(`Total Perimeter = ${perimeter.toFixed(2)} pixels = ${(perimeter * PIXEL_TO_UNIT).toFixed(2)} ${state.unit}`);
         
         return {
             total: perimeter,
@@ -615,14 +632,11 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     }
     
-    function calculateArea() {
-        let area = 0;
+    // 1. Shoelace Formula (Standard Method)
+    function calculateAreaShoelace() {
+        let sum = 0;
         let calculationSteps = [];
         
-        console.log("=== AREA CALCULATION (Shoelace Formula) ===");
-        console.log("Formula: Area = ½ |Σ(xᵢyᵢ₊₁ - xᵢ₊₁yᵢ)|");
-        
-        let sum = 0;
         for (let i = 0; i < state.points.length; i++) {
             const p1 = state.points[i];
             const p2 = state.points[(i + 1) % state.points.length];
@@ -640,77 +654,192 @@ document.addEventListener('DOMContentLoaded', function() {
                 term: term,
                 cumulativeSum: sum
             });
-            
-            console.log(`Step ${i+1}: (x${i+1}y${(i+1)%state.points.length+1} - x${(i+1)%state.points.length+1}y${i+1})`);
-            console.log(`  = (${p1.x.toFixed(1)} × ${p2.y.toFixed(1)} - ${p2.x.toFixed(1)} × ${p1.y.toFixed(1)})`);
-            console.log(`  = (${term1.toFixed(2)} - ${term2.toFixed(2)})`);
-            console.log(`  = ${term.toFixed(2)}`);
-            console.log(`  Cumulative Sum = ${sum.toFixed(2)}`);
         }
         
         const absoluteSum = Math.abs(sum);
-        area = absoluteSum / 2;
-        
-        console.log(`Final Sum = ${sum.toFixed(2)}`);
-        console.log(`Absolute Value = |${sum.toFixed(2)}| = ${absoluteSum.toFixed(2)}`);
-        console.log(`Area = ½ × ${absoluteSum.toFixed(2)} = ${area.toFixed(2)} pixels²`);
-        console.log(`Area = ${area.toFixed(2)} × (${PIXEL_TO_UNIT}²) = ${(area * PIXEL_TO_UNIT * PIXEL_TO_UNIT).toFixed(2)} ${state.unit}²`);
+        const area = absoluteSum / 2;
         
         return {
+            method: "Shoelace Formula",
+            formula: "Area = ½ |Σ(xᵢyᵢ₊₁ - xᵢ₊₁yᵢ)|",
             total: area,
             sum: sum,
             absoluteSum: absoluteSum,
-            steps: calculationSteps
+            steps: calculationSteps,
+            explanation: "Multiply each x-coordinate by the next y-coordinate, subtract each y-coordinate multiplied by the next x-coordinate, take the absolute value of the sum, and divide by 2."
         };
     }
     
-    function displayDetailedResults(perimeterResult, areaResult) {
+    // 2. Triangle Division Method (Easy to understand)
+    function calculateAreaTriangleDivision() {
+        let totalArea = 0;
+        let triangleAreas = [];
+        let calculationSteps = [];
+        
+        // Divide polygon into triangles from first vertex
+        const firstPoint = state.points[0];
+        for (let i = 1; i < state.points.length - 1; i++) {
+            const p1 = state.points[i];
+            const p2 = state.points[i + 1];
+            
+            // Area of triangle using coordinates: ½ |x₁(y₂ - y₃) + x₂(y₃ - y₁) + x₃(y₁ - y₂)|
+            const term1 = firstPoint.x * (p1.y - p2.y);
+            const term2 = p1.x * (p2.y - firstPoint.y);
+            const term3 = p2.x * (firstPoint.y - p1.y);
+            const triangleSum = term1 + term2 + term3;
+            const triangleArea = Math.abs(triangleSum) / 2;
+            
+            totalArea += triangleArea;
+            
+            triangleAreas.push({
+                vertices: [firstPoint, p1, p2],
+                term1: term1,
+                term2: term2,
+                term3: term3,
+                sum: triangleSum,
+                area: triangleArea
+            });
+            
+            calculationSteps.push({
+                triangle: i,
+                vertices: `P1, P${i+1}, P${i+2}`,
+                calculation: `½ |${firstPoint.x.toFixed(1)}×(${p1.y.toFixed(1)}-${p2.y.toFixed(1)}) + ${p1.x.toFixed(1)}×(${p2.y.toFixed(1)}-${firstPoint.y.toFixed(1)}) + ${p2.x.toFixed(1)}×(${firstPoint.y.toFixed(1)}-${p1.y.toFixed(1)})|`,
+                area: triangleArea
+            });
+        }
+        
+        return {
+            method: "Triangle Division",
+            formula: "Area = Σ[½ |x₁(y₂ - y₃) + x₂(y₃ - y₁) + x₃(y₁ - y₂)|]",
+            total: totalArea,
+            triangleAreas: triangleAreas,
+            steps: calculationSteps,
+            explanation: "Divide the polygon into triangles from one vertex. Calculate each triangle's area using the coordinate formula and sum them up."
+        };
+    }
+    
+    // 3. Trapezoid Rule (Simple method)
+    function calculateAreaTrapezoid() {
+        let area = 0;
+        let trapezoidAreas = [];
+        let calculationSteps = [];
+        
+        for (let i = 0; i < state.points.length; i++) {
+            const p1 = state.points[i];
+            const p2 = state.points[(i + 1) % state.points.length];
+            
+            // Area of trapezoid: ½ × (y₁ + y₂) × (x₂ - x₁)
+            const averageHeight = (p1.y + p2.y) / 2;
+            const width = p2.x - p1.x;
+            const trapezoidArea = averageHeight * width;
+            
+            area += trapezoidArea;
+            
+            trapezoidAreas.push({
+                point1: p1,
+                point2: p2,
+                averageHeight: averageHeight,
+                width: width,
+                area: trapezoidArea
+            });
+            
+            calculationSteps.push({
+                segment: i + 1,
+                calculation: `½ × (${p1.y.toFixed(1)} + ${p2.y.toFixed(1)}) × (${p2.x.toFixed(1)} - ${p1.x.toFixed(1)}) = ${averageHeight.toFixed(1)} × ${width.toFixed(1)}`,
+                area: trapezoidArea
+            });
+        }
+        
+        area = Math.abs(area);
+        
+        return {
+            method: "Trapezoid Rule",
+            formula: "Area = Σ[½ × (y₁ + y₂) × (x₂ - x₁)]",
+            total: area,
+            trapezoidAreas: trapezoidAreas,
+            steps: calculationSteps,
+            explanation: "Treat each segment as a trapezoid. Multiply the average height by the width for each segment and sum them up."
+        };
+    }
+    
+    // 4. Coordinate Method (Direct calculation)
+    function calculateAreaCoordinates() {
+        let area = 0;
+        let calculationSteps = [];
+        
+        // Method: Sum of (xᵢ × yᵢ₊₁) - (xᵢ₊₁ × yᵢ)
+        let sum1 = 0;
+        let sum2 = 0;
+        
+        for (let i = 0; i < state.points.length; i++) {
+            const p1 = state.points[i];
+            const p2 = state.points[(i + 1) % state.points.length];
+            
+            const term1 = p1.x * p2.y;
+            const term2 = p2.x * p1.y;
+            
+            sum1 += term1;
+            sum2 += term2;
+            
+            calculationSteps.push({
+                step: i + 1,
+                term1: `${p1.x.toFixed(1)} × ${p2.y.toFixed(1)} = ${term1.toFixed(2)}`,
+                term2: `${p2.x.toFixed(1)} × ${p1.y.toFixed(1)} = ${term2.toFixed(2)}`,
+                sum1: sum1,
+                sum2: sum2
+            });
+        }
+        
+        area = Math.abs(sum1 - sum2) / 2;
+        
+        return {
+            method: "Coordinate Method",
+            formula: "Area = ½ |(Σxᵢyᵢ₊₁) - (Σxᵢ₊₁yᵢ)|",
+            total: area,
+            sum1: sum1,
+            sum2: sum2,
+            steps: calculationSteps,
+            explanation: "Sum all xᵢ × yᵢ₊₁, sum all xᵢ₊₁ × yᵢ, take the absolute difference, and divide by 2."
+        };
+    }
+    
+    function displayDetailedResults(perimeterResult, areaResult, allMethods) {
         const unitPerimeter = (perimeterResult.total * PIXEL_TO_UNIT).toFixed(2);
         const unitArea = (areaResult.total * PIXEL_TO_UNIT * PIXEL_TO_UNIT).toFixed(2);
         
-        // Generate side lengths HTML with actual computations
+        // Generate side lengths HTML
         let sideLengthsHTML = '';
         perimeterResult.details.forEach((detail, index) => {
             const unitLength = (detail.length * PIXEL_TO_UNIT).toFixed(2);
             sideLengthsHTML += `
                 <div class="computation-step">
-                    <strong>Side ${index + 1}: P${index + 1} to P${(index + 1) % state.points.length + 1}</strong><br>
+                    <strong>Side ${index + 1}:</strong> ${unitLength} ${state.unit}<br>
                     Points: (${detail.point1.x.toFixed(1)}, ${detail.point1.y.toFixed(1)}) to (${detail.point2.x.toFixed(1)}, ${detail.point2.y.toFixed(1)})<br>
-                    Δx = ${detail.point2.x.toFixed(1)} - ${detail.point1.x.toFixed(1)} = <strong>${detail.dx.toFixed(1)}</strong><br>
-                    Δy = ${detail.point2.y.toFixed(1)} - ${detail.point1.y.toFixed(1)} = <strong>${detail.dy.toFixed(1)}</strong><br>
-                    Δx² = ${detail.dx.toFixed(1)}² = <strong>${detail.dxSquared.toFixed(2)}</strong><br>
-                    Δy² = ${detail.dy.toFixed(1)}² = <strong>${detail.dySquared.toFixed(2)}</strong><br>
-                    Sum = ${detail.dxSquared.toFixed(2)} + ${detail.dySquared.toFixed(2)} = <strong>${detail.sumSquares.toFixed(2)}</strong><br>
-                    Length = √${detail.sumSquares.toFixed(2)} = <strong>${detail.length.toFixed(2)} px</strong><br>
-                    Converted: ${detail.length.toFixed(2)} × ${PIXEL_TO_UNIT} = <strong>${unitLength} ${state.unit}</strong>
+                    Length = √[(${detail.dx.toFixed(1)})² + (${detail.dy.toFixed(1)})²] = ${detail.length.toFixed(2)} px
                 </div>
             `;
         });
         
-        // Generate area calculation HTML with actual computations
-        let areaCalculationHTML = '';
-        areaResult.steps.forEach((step, index) => {
-            areaCalculationHTML += `
-                <div class="computation-step">
-                    <strong>Step ${index + 1}: (x${index + 1}y${(index + 1) % state.points.length + 1} - x${(index + 1) % state.points.length + 1}y${index + 1})</strong><br>
-                    = (${step.point1.x.toFixed(1)} × ${step.point2.y.toFixed(1)} - ${step.point2.x.toFixed(1)} × ${step.point1.y.toFixed(1)})<br>
-                    = (${step.term1.toFixed(2)} - ${step.term2.toFixed(2)})<br>
-                    = <strong>${step.term.toFixed(2)}</strong><br>
-                    Cumulative Sum = <strong>${step.cumulativeSum.toFixed(2)}</strong>
+        // Generate area calculation HTML based on selected method
+        let areaCalculationHTML = generateAreaCalculationHTML(areaResult);
+        
+        // Generate method comparison
+        let methodComparisonHTML = '';
+        for (const [method, result] of Object.entries(allMethods)) {
+            const unitAreaValue = (result.total * PIXEL_TO_UNIT * PIXEL_TO_UNIT).toFixed(2);
+            methodComparisonHTML += `
+                <div class="method-result">
+                    <strong>${result.method}:</strong> ${unitAreaValue} ${state.unit}²
                 </div>
             `;
-        });
+        }
         
         resultsDiv.innerHTML = `
             <div class="result-item">
                 <h3>📐 Polygon Properties</h3>
                 <div><strong>Shape Type:</strong> ${getPolygonType(state.points.length)}</div>
                 <div><strong>Number of Sides:</strong> ${state.points.length}</div>
-                <div><strong>Coordinates (${state.unit}):</strong> 
-                    ${state.points.map((p, i) => 
-                        `P${i+1}(${(p.x * PIXEL_TO_UNIT).toFixed(1)}, ${(-p.y * PIXEL_TO_UNIT).toFixed(1)})`
-                    ).join(' → ')}
-                </div>
+                <div><strong>Area Method:</strong> ${areaResult.method}</div>
             </div>
             
             <div class="result-item">
@@ -720,25 +849,132 @@ document.addEventListener('DOMContentLoaded', function() {
                     <h4>Distance Formula: Length = √[(x₂-x₁)² + (y₂-y₁)²]</h4>
                     ${sideLengthsHTML}
                     <div class="computation-step">
-                        <strong>Sum of all sides:</strong> ${perimeterResult.total.toFixed(2)} pixels<br>
-                        <strong>Converted:</strong> ${perimeterResult.total.toFixed(2)} × ${PIXEL_TO_UNIT} = ${unitPerimeter} ${state.unit}
+                        <strong>Sum:</strong> ${perimeterResult.total.toFixed(2)} px = ${unitPerimeter} ${state.unit}
                     </div>
                 </div>
             </div>
             
             <div class="result-item">
-                <h3>📊 Area Calculation</h3>
+                <h3>📊 Area Calculation (${areaResult.method})</h3>
                 <div><strong>Total Area:</strong> ${unitArea} ${state.unit}²</div>
+                <div><strong>Formula:</strong> ${areaResult.formula}</div>
+                <div><em>${areaResult.explanation}</em></div>
                 <div class="calculation-details">
-                    <h4>Shoelace Formula: Area = ½ |Σ(xᵢyᵢ₊₁ - xᵢ₊₁yᵢ)|</h4>
                     ${areaCalculationHTML}
-                    <div class="computation-step">
-                        <strong>Final Sum:</strong> Σ = ${areaResult.sum.toFixed(2)}<br>
-                        <strong>Absolute Value:</strong> |${areaResult.sum.toFixed(2)}| = ${areaResult.absoluteSum.toFixed(2)}<br>
-                        <strong>Area in pixels²:</strong> ½ × ${areaResult.absoluteSum.toFixed(2)} = ${areaResult.total.toFixed(2)}<br>
-                        <strong>Converted:</strong> ${areaResult.total.toFixed(2)} × (${PIXEL_TO_UNIT}²) = ${unitArea} ${state.unit}²
-                    </div>
                 </div>
+            </div>
+            
+            <div class="result-item">
+                <h3>🔄 Method Comparison</h3>
+                <div class="method-comparison">
+                    <h4>All Area Calculation Methods:</h4>
+                    ${methodComparisonHTML}
+                </div>
+            </div>
+        `;
+    }
+    
+    function generateAreaCalculationHTML(areaResult) {
+        switch (areaResult.method) {
+            case "Shoelace Formula":
+                return generateShoelaceHTML(areaResult);
+            case "Triangle Division":
+                return generateTriangleHTML(areaResult);
+            case "Trapezoid Rule":
+                return generateTrapezoidHTML(areaResult);
+            case "Coordinate Method":
+                return generateCoordinateHTML(areaResult);
+            default:
+                return generateShoelaceHTML(areaResult);
+        }
+    }
+    
+    function generateShoelaceHTML(result) {
+        let stepsHTML = '';
+        result.steps.forEach((step, index) => {
+            stepsHTML += `
+                <div class="computation-step">
+                    <strong>Step ${index + 1}:</strong> (${step.point1.x.toFixed(1)} × ${step.point2.y.toFixed(1)}) - (${step.point2.x.toFixed(1)} × ${step.point1.y.toFixed(1)})<br>
+                    = (${step.term1.toFixed(2)} - ${step.term2.toFixed(2)}) = ${step.term.toFixed(2)}<br>
+                    Cumulative Sum = ${step.cumulativeSum.toFixed(2)}
+                </div>
+            `;
+        });
+        
+        return `
+            <h4>Step-by-Step Calculation:</h4>
+            ${stepsHTML}
+            <div class="computation-step">
+                <strong>Final Sum:</strong> ${result.sum.toFixed(2)}<br>
+                <strong>Absolute Value:</strong> |${result.sum.toFixed(2)}| = ${result.absoluteSum.toFixed(2)}<br>
+                <strong>Area:</strong> ½ × ${result.absoluteSum.toFixed(2)} = ${result.total.toFixed(2)} px²<br>
+                <strong>Converted:</strong> ${result.total.toFixed(2)} × (${PIXEL_TO_UNIT}²) = ${(result.total * PIXEL_TO_UNIT * PIXEL_TO_UNIT).toFixed(2)} ${state.unit}²
+            </div>
+        `;
+    }
+    
+    function generateTriangleHTML(result) {
+        let stepsHTML = '';
+        result.steps.forEach((step, index) => {
+            stepsHTML += `
+                <div class="computation-step">
+                    <strong>Triangle ${index + 1} (${step.vertices}):</strong><br>
+                    ${step.calculation}<br>
+                    Area = ${step.area.toFixed(2)} px²
+                </div>
+            `;
+        });
+        
+        return `
+            <h4>Triangle Division:</h4>
+            ${stepsHTML}
+            <div class="computation-step">
+                <strong>Total Area:</strong> ${result.total.toFixed(2)} px² = ${(result.total * PIXEL_TO_UNIT * PIXEL_TO_UNIT).toFixed(2)} ${state.unit}²
+            </div>
+        `;
+    }
+    
+    function generateTrapezoidHTML(result) {
+        let stepsHTML = '';
+        result.steps.forEach((step, index) => {
+            stepsHTML += `
+                <div class="computation-step">
+                    <strong>Segment ${step.segment}:</strong><br>
+                    ${step.calculation}<br>
+                    Area = ${step.area.toFixed(2)} px²
+                </div>
+            `;
+        });
+        
+        return `
+            <h4>Trapezoid Areas:</h4>
+            ${stepsHTML}
+            <div class="computation-step">
+                <strong>Total Area:</strong> ${result.total.toFixed(2)} px² = ${(result.total * PIXEL_TO_UNIT * PIXEL_TO_UNIT).toFixed(2)} ${state.unit}²
+            </div>
+        `;
+    }
+    
+    function generateCoordinateHTML(result) {
+        let stepsHTML = '';
+        result.steps.forEach((step, index) => {
+            stepsHTML += `
+                <div class="computation-step">
+                    <strong>Step ${step.step}:</strong><br>
+                    Σxᵢyᵢ₊₁: ${step.term1} → Total: ${step.sum1.toFixed(2)}<br>
+                    Σxᵢ₊₁yᵢ: ${step.term2} → Total: ${step.sum2.toFixed(2)}
+                </div>
+            `;
+        });
+        
+        return `
+            <h4>Coordinate Calculation:</h4>
+            ${stepsHTML}
+            <div class="computation-step">
+                <strong>Difference:</strong> ${result.sum1.toFixed(2)} - ${result.sum2.toFixed(2)} = ${(result.sum1 - result.sum2).toFixed(2)}<br>
+                <strong>Absolute Value:</strong> |${(result.sum1 - result.sum2).toFixed(2)}| = ${Math.abs(result.sum1 - result.sum2).toFixed(2)}<br>
+                <strong>Area:</strong> ½ × ${Math.abs(result.sum1 - result.sum2).toFixed(2)} = ${result.total.toFixed(2)} px²<br>
+                <strong>Converted:</strong> ${result.total.toFixed(2)} × (${PIXEL_TO_UNIT}²) = ${(result.total * PIXEL_TO_UNIT * PIXEL_TO_UNIT).toFixed(2)} ${state.unit}²
             </div>
         `;
     }
