@@ -40,8 +40,6 @@
                     <label for="mobileFillColor">Fill:</label>
                     <input type="color" id="mobileFillColor" value="#3498db33">
                 </div>
-                
-                <button id="mobileClearBtn">Clear</button>
             </div>
             
             <div class="mobile-controls-bottom">
@@ -113,17 +111,18 @@
                     <input type="range" id="pointSize" min="3" max="15" value="5">
                     <span id="pointSizeValue">5</span>
                 </div>
-                
-                <button id="clearBtn">Clear Polygon</button>
             </div>
             
             <!-- Drawing Canvas -->
             <div class="canvas-container">
                 <div class="canvas-header">
                     <h2>Drawing Area</h2>
-                    <div class="mode-controls">
-                        <button id="plotModeBtn" class="mode-btn active">📐 Plot Mode</button>
-                        <button id="panModeBtn" class="mode-btn">🖐️ Pan Mode</button>
+                    <div class="header-controls">
+                        <div class="mode-controls">
+                            <button id="plotModeBtn" class="mode-btn active">📐 Plot Mode</button>
+                            <button id="panModeBtn" class="mode-btn">🖐️ Pan Mode</button>
+                        </div>
+                        <button id="clearBtn" class="clear-btn">🗑️ Clear</button>
                     </div>
                 </div>
                 <div class="canvas-wrapper">
