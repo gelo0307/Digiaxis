@@ -273,11 +273,6 @@ button:hover {
     flex: 1;
     min-height: 500px;
     touch-action: none;
-    cursor: grab;
-}
-
-.canvas-wrapper.grabbing {
-    cursor: grabbing;
 }
 
 #polygonCanvas {
@@ -408,6 +403,22 @@ button:hover {
         font-size: 0.8rem;
         min-height: 35px;
     }
+    
+    #desktopHint {
+        display: none;
+    }
+    
+    #mobileHint {
+        display: inline;
+    }
+    
+    #desktopInstructions {
+        display: none;
+    }
+    
+    #mobileInstructions {
+        display: block;
+    }
 }
 
 /* Tablet Portrait Styles */
@@ -446,6 +457,22 @@ button:hover {
     
     h1 {
         font-size: 2rem;
+    }
+    
+    #desktopHint {
+        display: none;
+    }
+    
+    #mobileHint {
+        display: inline;
+    }
+    
+    #desktopInstructions {
+        display: none;
+    }
+    
+    #mobileInstructions {
+        display: block;
     }
 }
 
