@@ -138,7 +138,7 @@ h1 {
     padding: 25px;
     border-radius: 15px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-    flex: 0 0 300px;
+    flex: 0 0 320px;
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -226,6 +226,16 @@ h1 {
     margin-bottom: 8px;
     font-size: 0.95rem;
     color: #cccccc;
+}
+
+.info-item ul {
+    margin-left: 20px;
+    margin-top: 5px;
+}
+
+.info-item li {
+    margin-bottom: 3px;
+    font-size: 0.9rem;
 }
 
 .canvas-container {
@@ -474,6 +484,27 @@ h1 {
     border-radius: 4px;
     margin: 5px 0;
     border-left: 3px solid #3498db;
+}
+
+.method-comparison {
+    background: rgba(155, 89, 182, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    border-left: 4px solid #9b59b6;
+}
+
+.method-comparison h4 {
+    color: #9b59b6;
+    margin-bottom: 10px;
+}
+
+.method-result {
+    background: rgba(241, 196, 15, 0.1);
+    padding: 10px;
+    border-radius: 5px;
+    margin: 5px 0;
+    border-left: 3px solid #f1c40f;
 }
 
 /* Responsive Design */
