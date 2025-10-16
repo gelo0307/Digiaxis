@@ -14,33 +14,55 @@
         
         <!-- Controls for Mobile/Tablet -->
         <div class="mobile-controls">
-            <div class="control-group">
-                <label for="mobileUnit">Unit:</label>
-                <select id="mobileUnit">
-                    <option value="cm">cm</option>
-                    <option value="m">m</option>
-                    <option value="mm">mm</option>
-                    <option value="in">in</option>
-                    <option value="ft">ft</option>
-                </select>
+            <div class="mobile-controls-top">
+                <div class="control-group">
+                    <label for="mobileUnit">Unit:</label>
+                    <select id="mobileUnit">
+                        <option value="cm">cm</option>
+                        <option value="m">m</option>
+                        <option value="mm">mm</option>
+                        <option value="in">in</option>
+                        <option value="ft">ft</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="mobileCursorColor">Cursor:</label>
+                    <input type="color" id="mobileCursorColor" value="#ff4444">
+                </div>
+                
+                <div class="control-group">
+                    <label for="mobileLineColor">Line:</label>
+                    <input type="color" id="mobileLineColor" value="#3498db">
+                </div>
+                
+                <div class="control-group">
+                    <label for="mobileFillColor">Fill:</label>
+                    <input type="color" id="mobileFillColor" value="#3498db33">
+                </div>
+                
+                <button id="mobileClearBtn">Clear</button>
             </div>
             
-            <div class="control-group">
-                <label for="mobileCursorColor">Cursor:</label>
-                <input type="color" id="mobileCursorColor" value="#ff4444">
+            <div class="mobile-controls-bottom">
+                <div class="control-group">
+                    <label for="mobileLineWidth">Width:</label>
+                    <input type="range" id="mobileLineWidth" min="1" max="10" value="3">
+                    <span id="mobileLineWidthValue">3</span>
+                </div>
+                
+                <div class="control-group">
+                    <label for="mobileGridSize">Grid:</label>
+                    <input type="range" id="mobileGridSize" min="10" max="100" value="50">
+                    <span id="mobileGridSizeValue">50</span>
+                </div>
+                
+                <div class="control-group">
+                    <label for="mobilePointSize">Point:</label>
+                    <input type="range" id="mobilePointSize" min="3" max="15" value="5">
+                    <span id="mobilePointSizeValue">5</span>
+                </div>
             </div>
-            
-            <div class="control-group">
-                <label for="mobileLineColor">Line:</label>
-                <input type="color" id="mobileLineColor" value="#3498db">
-            </div>
-            
-            <div class="control-group">
-                <label for="mobileLineWidth">Width:</label>
-                <input type="range" id="mobileLineWidth" min="1" max="10" value="3">
-            </div>
-            
-            <button id="mobileClearBtn">Clear</button>
         </div>
 
         <div class="main-content">
