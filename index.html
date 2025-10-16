@@ -122,7 +122,8 @@
                 <div class="canvas-header">
                     <h2>Drawing Area</h2>
                     <div class="canvas-info">
-                        <span>Drag to scroll • Click to add points</span>
+                        <span id="desktopHint">Click to add points • Right-click to pan</span>
+                        <span id="mobileHint" style="display: none;">Tap to add points • Touch and hold to pan</span>
                     </div>
                 </div>
                 <div class="canvas-wrapper">
@@ -138,7 +139,8 @@
             <div id="results">
                 <p>Click on the canvas to create polygon points</p>
                 <p>Close the polygon by clicking near the first point</p>
-                <p>Drag to scroll around the drawing area</p>
+                <p id="desktopInstructions">Right-click or Ctrl+click to pan</p>
+                <p id="mobileInstructions" style="display: none;">Touch and hold to pan the drawing area</p>
             </div>
         </div>
     </div>
@@ -146,4 +148,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
