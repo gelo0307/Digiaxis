@@ -44,7 +44,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const pointSizeValue = document.getElementById('pointSizeValue');
     const mobilePointSizeValue = document.getElementById('mobilePointSizeValue');
     const clearBtn = document.getElementById('clearBtn');
-    const mobileClearBtn = document.getElementById('mobileClearBtn');
     const plotModeBtn = document.getElementById('plotModeBtn');
     const panModeBtn = document.getElementById('panModeBtn');
     const resultsDiv = document.getElementById('results');
@@ -188,8 +187,6 @@ document.addEventListener('DOMContentLoaded', function() {
             redraw();
         });
         
-        mobileClearBtn.addEventListener('click', clearPolygon);
-        
         // Mode buttons
         plotModeBtn.addEventListener('click', () => setMode('plot'));
         panModeBtn.addEventListener('click', () => setMode('pan'));
@@ -217,6 +214,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update instructions
         updateInstructions();
         
+        // Reset dragging state
+        state.isDragging = false;
+        
         redraw();
     }
     
@@ -238,9 +238,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Mouse event handlers
     function handleMouseDown(e) {
         if (state.currentMode === 'pan') {
+            // Pan mode - start dragging
             state.isDragging = true;
             state.lastPanPoint = { x: e.clientX, y: e.clientY };
             canvas.style.cursor = 'grabbing';
+            e.preventDefault();
         } else if (state.currentMode === 'plot' && e.button === 0) {
             // Plot mode - left click to add point
             const screenPoint = getCanvasCoordinates(e);
@@ -305,6 +307,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     y: screenPoint.y - state.offset.y
                 };
                 handlePointAddition(worldPoint);
+            } else if (state.currentMode === 'pan') {
+                // In pan mode, start dragging
+                state.isDragging = true;
             }
         }
     }
@@ -312,8 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function handleTouchMove(e) {
         e.preventDefault();
         
-        if (e.touches.length === 1 && state.currentMode === 'pan') {
-            // Pan the canvas in pan mode
+        if (e.touches.length === 1) {
             const touch = e.touches[0];
             const screenPoint = getCanvasCoordinates(touch);
             state.currentMousePos = screenPoint;
@@ -326,29 +330,18 @@ document.addEventListener('DOMContentLoaded', function() {
             // Update cursor display
             updateCursorDisplay(worldPoint);
             
-            // Pan the canvas
-            const dx = touch.clientX - state.lastPanPoint.x;
-            const dy = touch.clientY - state.lastPanPoint.y;
-            
-            state.offset.x += dx;
-            state.offset.y += dy;
-            
-            state.lastPanPoint = { x: touch.clientX, y: touch.clientY };
-            redraw();
-        } else if (e.touches.length === 1 && state.currentMode === 'plot') {
-            // In plot mode, just update cursor and show live measurement
-            const touch = e.touches[0];
-            const screenPoint = getCanvasCoordinates(touch);
-            state.currentMousePos = screenPoint;
-            
-            const worldPoint = {
-                x: screenPoint.x - state.offset.x,
-                y: screenPoint.y - state.offset.y
-            };
-            
-            updateCursorDisplay(worldPoint);
-            
-            if (state.points.length > 0 && !state.isClosed) {
+            if (state.currentMode === 'pan' && state.isDragging) {
+                // Pan the canvas in pan mode
+                const dx = touch.clientX - state.lastPanPoint.x;
+                const dy = touch.clientY - state.lastPanPoint.y;
+                
+                state.offset.x += dx;
+                state.offset.y += dy;
+                
+                state.lastPanPoint = { x: touch.clientX, y: touch.clientY };
+                redraw();
+            } else if (state.currentMode === 'plot' && state.points.length > 0 && !state.isClosed) {
+                // In plot mode, show live measurement
                 showLiveMeasurement(screenPoint, worldPoint);
             } else {
                 redraw();
@@ -357,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function handleTouchEnd(e) {
-        // No special handling needed for touch end
+        state.isDragging = false;
     }
     
     // Common functions
