@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digiaxis</title>
+    <title>Polygon Area & Perimeter Calculator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Digiaxis</h1>
+            <h1>Polygon Area & Perimeter Calculator</h1>
+            <p class="subtitle">Visualize and calculate polygon properties with detailed mathematical explanations</p>
         </header>
         
         <!-- Mobile Controls -->
@@ -111,6 +112,16 @@
                     <input type="range" id="pointSize" min="3" max="15" value="5">
                     <span id="pointSizeValue">5</span>
                 </div>
+
+                <div class="calculation-info">
+                    <h3>Calculation Methods</h3>
+                    <div class="info-item">
+                        <strong>Perimeter:</strong> Sum of all side lengths
+                    </div>
+                    <div class="info-item">
+                        <strong>Area:</strong> Shoelace formula
+                    </div>
+                </div>
             </div>
             
             <!-- Drawing Canvas -->
@@ -136,11 +147,13 @@
         
         <!-- Results Panel -->
         <div class="results-panel">
-            <h2>Results</h2>
+            <h2>Calculation Results</h2>
             <div id="results">
-                <p>Switch to <strong>Plot Mode</strong> to add points and create polygons</p>
-                <p>Switch to <strong>Pan Mode</strong> to move around the drawing area</p>
-                <p>Close the polygon by clicking near the first point</p>
+                <div class="instruction">
+                    <p>Switch to <strong>Plot Mode</strong> to add points and create polygons</p>
+                    <p>Switch to <strong>Pan Mode</strong> to move around the drawing area</p>
+                    <p>Close the polygon by clicking near the first point</p>
+                </div>
             </div>
         </div>
     </div>
@@ -148,4 +161,3 @@
     <script src="script.js"></script>
 </body>
 </html>
-
