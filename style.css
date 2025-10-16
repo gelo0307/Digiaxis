@@ -37,6 +37,13 @@ h1 {
     background: linear-gradient(45deg, #4fa8e4, #6c5ce7);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #cccccc;
+    font-size: 1.1rem;
+    font-weight: 300;
 }
 
 /* Mobile Controls */
@@ -199,6 +206,26 @@ h1 {
     font-weight: 600;
     color: #4fa8e4;
     font-size: 1.1rem;
+}
+
+.calculation-info {
+    margin-top: 30px;
+    padding: 20px;
+    background: rgba(79, 168, 228, 0.1);
+    border-radius: 10px;
+    border-left: 4px solid #4fa8e4;
+}
+
+.calculation-info h3 {
+    color: #4fa8e4;
+    margin-bottom: 15px;
+    font-size: 1.2rem;
+}
+
+.info-item {
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    color: #cccccc;
 }
 
 .canvas-container {
@@ -374,8 +401,19 @@ h1 {
     color: #ffffff;
 }
 
+.instruction {
+    padding: 20px;
+    background: rgba(52, 73, 94, 0.3);
+    border-radius: 10px;
+    border-left: 4px solid #34495e;
+}
+
+.instruction p {
+    margin-bottom: 10px;
+}
+
 .result-item {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     padding: 20px;
     background: linear-gradient(135deg, rgba(61, 61, 61, 0.8), rgba(68, 68, 68, 0.8));
     border-radius: 10px;
@@ -399,6 +437,35 @@ h1 {
 .result-item em {
     color: #cccccc;
     font-size: 1rem;
+}
+
+.calculation-details {
+    background: rgba(39, 174, 96, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+    border-left: 4px solid #27ae60;
+}
+
+.calculation-details h4 {
+    color: #27ae60;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.calculation-step {
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    color: #cccccc;
+}
+
+.math-formula {
+    font-family: 'Courier New', monospace;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    border-radius: 5px;
+    margin: 8px 0;
+    border-left: 3px solid #e74c3c;
 }
 
 /* Responsive Design */
@@ -497,6 +564,10 @@ h1 {
     .mode-controls {
         width: 100%;
         justify-content: space-between;
+    }
+    
+    .clear-btn {
+        width: 100%;
     }
     
     .cursor-coordinates {
